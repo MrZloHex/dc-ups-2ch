@@ -10,6 +10,18 @@
 · [Русская версия README](README.ru.md)
 · [Full Russian passport & manual (LaTeX)](docs/DC_UPS_documentation_v6.tex)
 
+<p align="center">
+  <img src="hardware/enclosure/renders/exploded-front.png" alt="Exploded isometric — front panel, battery, aluminium extrusion shell" width="49%"/>
+  <img src="hardware/enclosure/renders/exploded-rear.png"  alt="Exploded isometric — rear panel with two-tier PCB stack (XL4016 charger + 2× XL6009 boosters + ESP32)" width="49%"/>
+</p>
+
+<p align="center"><sub>
+  Exploded isometric views from the public
+  <a href="https://cad.onshape.com/documents/1234567890abcdef/w/abcdef1234567890">Onshape</a>
+  model. Left: front panel with IEC C14 inlet and two DC output sockets pulled off, AGM battery visible in the aluminium extrusion. Right: back panel and the two-tier power PCB assembly pulled off.
+  STEP files: <a href="hardware/enclosure/step/">hardware/enclosure/step/</a>.
+</sub></p>
+
 ---
 
 ## Why this exists

@@ -8,7 +8,12 @@ all import STEP directly.
 - **License:** [CC-BY-SA 4.0](LICENSE-CC-BY-SA-4.0.txt)
 - **Source of truth:** the public Onshape document (link in
   [PRINTABLES.md](PRINTABLES.md) / [MAKERWORLD.md](MAKERWORLD.md))
-- **Distributed files:** `step/*.step` (see below)
+- **Distributed files:** `step/*.step` and `renders/*.png` (see below)
+
+<p align="center">
+  <img src="renders/exploded-front.png" alt="Exploded isometric — front panel, battery, aluminium extrusion shell" width="49%"/>
+  <img src="renders/exploded-rear.png"  alt="Exploded isometric — rear panel with PCB stack" width="49%"/>
+</p>
 
 ## Contents
 
@@ -19,6 +24,9 @@ hardware/enclosure/
 ├── PRINTABLES.md                    ready-to-paste Printables listing
 ├── MAKERWORLD.md                    ready-to-paste MakerWorld listing
 ├── EXPORT_FROM_ONSHAPE.md           how to regenerate the STEP exports
+├── renders/
+│   ├── exploded-front.png           iso view: front panel + battery exploded
+│   └── exploded-rear.png            iso view: back panel + PCB stack exploded
 └── step/
     ├── dc-ups-2ch-assembly.step     full assembly for visualisation
     ├── dc-ups-2ch-case-bottom.step  main body with battery bay

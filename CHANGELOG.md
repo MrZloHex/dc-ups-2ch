@@ -20,6 +20,10 @@ and this project uses date-based firmware versions (`YYYY.MM.DD-vN`).
   `\docrev` commands with `\IfFileExists` fallbacks so they compile standalone.
 - `hardware/enclosure/` folder with Onshape-exported STEP files, CC-BY-SA 4.0
   license, and copy/paste listing templates for Printables and MakerWorld.
+- `hardware/enclosure/renders/` — exploded isometric line-art views
+  (`exploded-front.png`, `exploded-rear.png`) exported from Onshape. Displayed
+  as the hero image in both READMEs and inserted into the LaTeX passport
+  (§ *Сервисные изображения и 3D-модель*).
 - Serial boot log and web-panel header now show version + git hash + build date.
 
 ### Changed
@@ -27,6 +31,12 @@ and this project uses date-based firmware versions (`YYYY.MM.DD-vN`).
   **GNU GPL-3.0-or-later**. Every source file now carries an
   `SPDX-License-Identifier: GPL-3.0-or-later` header; the enclosure /
   3D model stays under CC-BY-SA 4.0.
+- **mDNS reliability:** `WiFi.setSleep(false)` (multicast survives modem
+  sleep), `WiFi.setHostname()` before `WiFi.begin()` (DHCP hostname advertised),
+  and `MDNS.end()` + `MDNS.begin()` on every reconnect (responder rebuilt).
+- **Comments:** every in-source comment (`.h`/`.cpp`/`.py`) translated to
+  English and cut down to *why*-style notes; narration removed. User-visible
+  strings (web UI, ntfy messages, event log) stay in Russian.
 - Split the 2600-line `main.cpp` into focused modules under `src/` and
   `include/` (`ups_common`, `config_store`, `event_log`, `hardware`, `power`,
   `wifi_mgr`, `ntfy`, `sleep_modes`, `recovery`, `web_ui`). No behavioural

@@ -10,6 +10,18 @@
 · [English README](README.md)
 · [Полный паспорт и руководство (LaTeX)](docs/DC_UPS_documentation_v6.tex)
 
+<p align="center">
+  <img src="hardware/enclosure/renders/exploded-front.png" alt="Разнесённый вид со стороны лицевой панели: аккумулятор, IEC C14, два DC-выхода" width="49%"/>
+  <img src="hardware/enclosure/renders/exploded-rear.png"  alt="Разнесённый вид со стороны задней панели: двухъярусная плата XL4016 + 2× XL6009 + ESP32" width="49%"/>
+</p>
+
+<p align="center"><sub>
+  Изометрические разнесённые виды из открытой
+  <a href="https://cad.onshape.com/documents/1234567890abcdef/w/abcdef1234567890">Onshape</a>-модели.
+  Слева — лицевая панель с разъёмом IEC C14 и двумя выходными гнёздами, аккумулятор AGM внутри корпуса из алюминиевого профиля. Справа — задняя крышка и двухъярусная плата питания с зарядным XL4016 и двумя XL6009.
+  STEP-файлы: <a href="hardware/enclosure/step/">hardware/enclosure/step/</a>.
+</sub></p>
+
 ---
 
 ## Зачем это нужно

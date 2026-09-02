@@ -11,6 +11,8 @@
 \usepackage{array,tabularx,longtable,booktabs,multirow}
 \usepackage{enumitem}
 \usepackage{graphicx}
+% Renders exported from the Onshape model live next to the STEP files.
+\graphicspath{{../hardware/enclosure/renders/}}
 \usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{fancyhdr}
@@ -59,6 +61,13 @@
 \newcommand{\blankfig}[2]{%
   \begin{figure}[H]\centering
   \fbox{\parbox[c][#1][c]{0.90\textwidth}{\centering\sffamily\color{gray}\Large #2\\[0.5em]\normalsize Вставить скриншот / изображение}}
+  \end{figure}
+}
+% \realfig{filename}{caption} — inserts an image full text-width with a caption line.
+\newcommand{\realfig}[2]{%
+  \begin{figure}[H]\centering
+  \includegraphics[width=0.95\textwidth,keepaspectratio]{#1}\\[0.4em]
+  {\sffamily\small #2}
   \end{figure}
 }
 \newcommand{\yesno}{□ да\quad □ нет}
@@ -409,14 +418,16 @@ ntfy: \texttt{!ups status} / \texttt{!ups ping} & \yesno & \rule{40mm}{0.4pt} \\
 \end{itemize}
 
 \subsection{Сервисные изображения и 3D-модель}\label{sec:figures}
-Ниже предусмотрены места для скриншотов 3D-модели корпуса.
+Сборочные виды экспортированы из общедоступной модели Onshape (см. подраздел о 3D-модели в README проекта). Полные STEP-файлы лежат в каталоге репозитория \texttt{hardware/enclosure/step/}.
 
-\blankfig{55mm}{Рисунок 1. Общий вид устройства и расположение органов управления}
-\blankfig{55mm}{Рисунок 2. Винты / защёлки крышки и направление разборки}
-\blankfig{55mm}{Рисунок 3. Внутренняя компоновка и расположение аккумулятора}
+\realfig{exploded-front.png}{Рисунок 1. Разнесённый вид со стороны лицевой панели: корпус из алюминиевого профиля, аккумулятор AGM~12\,В\,7\,А·ч установлен внутри, лицевая панель с входным разъёмом IEC~C14, силовым выключателем и двумя гнёздами DC-выходов вынесена слева.}
+
+\realfig{exploded-rear.png}{Рисунок 2. Разнесённый вид со стороны задней панели: корпус с уже установленными органами управления, задняя крышка снята, показана двухъярусная плата с зарядным модулем XL4016, двумя DC/DC XL6009 и материнской платой ESP32.}
+
+\blankfig{55mm}{Рисунок 3. Винты / защёлки крышки и направление разборки}
 \blankfig{55mm}{Рисунок 4. Расположение предохранителя и клемм АКБ}
 \blankfig{55mm}{Рисунок 5. Извлечение и установка аккумулятора}
-\blankfig{55mm}{Рисунок 6. Платы XL4016, ESP32, два XL6009 и силовые каналы}
+\blankfig{55mm}{Рисунок 6. Платы XL4016, ESP32, два XL6009 и силовые каналы крупным планом}
 
 % -------------------- 9 --------------------
 \section{Техническое обслуживание}
