@@ -27,9 +27,12 @@ and this project uses date-based firmware versions (`YYYY.MM.DD-vN`).
 - **Documentation site** at
   [`https://mrzlohex.github.io/dc-ups-2ch/`](https://mrzlohex.github.io/dc-ups-2ch/)
   served from `docs/` on the `master` branch (GitHub Pages, `.nojekyll`).
-  Landing page: [`docs/index.html`](docs/index.html) — bilingual (EN / RU) with
-  an EN⇆RU switch, saves the choice in `localStorage`, defaults to English on
-  first visit, respects `prefers-color-scheme` for dark mode.
+  Landing page: [`docs/index.html`](docs/index.html) — datasheet-styled
+  technical portal (sans + mono, hairline borders, `FIG-01` / `DOC-01`
+  identifiers). Bilingual EN / RU with a header switch, saves the choice in
+  `localStorage`, defaults to English, respects `prefers-color-scheme` for
+  dark mode. Three sections: `01 / FIGURES` (exploded renders), `02 / DOCUMENTS`
+  (PDFs + GitHub links), `03 / REFERENCE` (quick controls + electrical data).
 - `docs/DC_UPS_user_manual_v6.tex` — short A5 Russian user manual (8 pages),
   templatized against `build_info.tex` and with two QR codes on the last page
   (local `dc-ups.local` panel + docs site).

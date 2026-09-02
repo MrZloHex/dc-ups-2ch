@@ -3,299 +3,798 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#1e5b4f">
-  <meta name="description" content="DC-UPS-2CH documentation, user manual, service information and firmware resources for an ESP32-based dual-channel DC UPS.">
-  <meta property="og:title" content="DC-UPS-2CH — Documentation">
-  <meta property="og:description" content="Documentation, user manual and service information for the dual-channel ROUTER / ONT backup power supply.">
+  <meta name="theme-color" content="#153f37">
+  <meta name="description" content="DC-UPS-2CH technical documentation, user manual, service information and firmware resources.">
+  <meta property="og:title" content="DC-UPS-2CH — Technical documentation">
+  <meta property="og:description" content="Technical documentation, user manual and service information for the dual-channel ROUTER / ONT backup power supply.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://mrzlohex.github.io/dc-ups-2ch/">
   <meta property="og:image" content="https://raw.githubusercontent.com/MrZloHex/dc-ups-2ch/master/hardware/enclosure/renders/exploded-front.png">
   <title>DC-UPS-2CH — Documentation</title>
+
   <style>
-    :root{
-      --bg:#f4f6f4;--card:#fff;--text:#18201d;--muted:#66716c;--line:#dce4e0;
-      --accent:#1e5b4f;--soft:#eaf3ef;--warn:#fff8e7;--warnline:#e8c66a;--r:18px
+    :root {
+      --bg: #f3f5f4;
+      --surface: #ffffff;
+      --text: #161b19;
+      --muted: #5f6965;
+      --line: #cfd6d3;
+      --line-dark: #aeb9b5;
+      --accent: #153f37;
+      --accent-soft: #e9efed;
+      --warning-bg: #f6f3e8;
+      --warning-line: #b9a66f;
+      --figure-bg: #fafcfb;
+      --max: 1040px;
     }
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
-    a{color:inherit}
-    .wrap{width:min(980px,calc(100% - 28px));margin:auto}
-    .hero{background:radial-gradient(circle at 85% 15%,rgba(255,255,255,.16),transparent 27%),linear-gradient(135deg,#174a40,#1e5b4f 55%,#287363);color:#fff;padding:24px 0 48px;border-radius:0 0 28px 28px}
-    .hero-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:26px}
-    .badge{display:inline-block;padding:6px 11px;border:1px solid #ffffff47;border-radius:999px;background:#ffffff17;font-size:13px;font-weight:700}
-    .lang-switch{display:inline-flex;align-items:center;padding:4px;background:#ffffff14;border:1px solid #ffffff45;border-radius:999px;backdrop-filter:blur(8px)}
-    .lang-btn{border:0;background:transparent;color:#ffffffb8;font:inherit;font-weight:800;font-size:12px;letter-spacing:.06em;padding:7px 11px;border-radius:999px;cursor:pointer}
-    .lang-btn.active{background:#fff;color:var(--accent)}
-    .lang-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
-    h1{margin:0 0 8px;font-size:clamp(34px,7vw,58px);line-height:1;letter-spacing:-.04em}
-    .subtitle{max-width:760px;margin:0;color:#ffffffdc;font-size:clamp(16px,2.7vw,20px)}
-    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:12px;text-decoration:none;font-weight:750}
-    .btn.main{background:#fff;color:var(--accent)}
-    .btn.ghost{border:1px solid #ffffff57;background:#ffffff12;color:#fff}
-    main{padding:28px 0 50px}
-    .title{font-size:22px}
-    .renders{display:grid;grid-template-columns:1fr 1fr;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin:0 0 22px}
-    .renders figure{margin:0}
-    .renders img{display:block;width:100%;height:auto;border-radius:12px;background:#fafcfb}
-    .renders figcaption{margin-top:8px;font-size:12.5px;color:var(--muted);text-align:center}
-    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-    .card{display:flex;flex-direction:column;min-height:190px;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
-    .card.featured{border-color:#b9d9cf;background:linear-gradient(#fff,#f5fbf8)}
-    .icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:var(--soft);font-size:21px;margin-bottom:14px}
-    .card h2{margin:0 0 7px;font-size:19px}
-    .card p{margin:0 0 17px;color:var(--muted);font-size:14px}
-    .card .link{margin-top:auto;color:var(--accent);font-weight:750;text-decoration:none}
-    .card .link:hover{text-decoration:underline}
-    .info{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}
-    .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px}
-    .panel h2{margin:0 0 12px;font-size:18px}
-    .kv{display:grid;grid-template-columns:1fr auto;gap:9px 16px;font-size:14px}
-    .kv span:nth-child(odd){color:var(--muted)}
-    .kv span:nth-child(even){font-weight:700;text-align:right}
-    code{background:#eef2f0;padding:2px 5px;border-radius:6px}
-    .warning{margin-top:14px;padding:16px 18px;background:var(--warn);border:1px solid var(--warnline);border-radius:14px;font-size:14px}
-    footer{padding:25px 0 34px;color:var(--muted);font-size:13px;text-align:center}
-    @media(max-width:700px){.grid,.info,.renders{grid-template-columns:1fr}.card{min-height:0}.hero{padding-top:18px}.hero-top{margin-bottom:22px}}
-    @media(prefers-color-scheme:dark){
-      :root{--bg:#111714;--card:#18201d;--text:#edf5f1;--muted:#a8b5af;--line:#2a3933;--soft:#21352e;--warn:#2b2516;--warnline:#7d6936}
-      code{background:#25302c}
-      .card.featured{background:linear-gradient(#18201d,#17251f);border-color:#315a4d}
-      .renders img{background:#0f1613}
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family:
+        Inter, "IBM Plex Sans", "Segoe UI", Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+      font-size: 15px;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .container {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    /* Header */
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line-dark);
+    }
+
+    .header-bar {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .project-id {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .project-name {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: .055em;
+      white-space: nowrap;
+    }
+
+    .project-meta {
+      color: var(--muted);
+      font-size: 12px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      white-space: nowrap;
+    }
+
+    .lang-switch {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line-dark);
+      background: var(--surface);
+      min-width: 92px;
+    }
+
+    .lang-btn {
+      border: 0;
+      border-right: 1px solid var(--line-dark);
+      background: transparent;
+      color: var(--muted);
+      padding: 7px 11px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      cursor: pointer;
+    }
+
+    .lang-btn:last-child { border-right: 0; }
+
+    .lang-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .hero {
+      padding: 46px 0 42px;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 6vw, 56px);
+      line-height: .98;
+      letter-spacing: -.035em;
+      font-weight: 850;
+    }
+
+    .subtitle {
+      max-width: 760px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: clamp(16px, 2.2vw, 19px);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 9px 15px;
+      border: 1px solid var(--accent);
+      font-weight: 750;
+      font-size: 14px;
+      letter-spacing: .01em;
+    }
+
+    .button.primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .button.secondary {
+      background: var(--surface);
+      color: var(--accent);
+    }
+
+    /* Main */
+
+    main {
+      padding: 34px 0 54px;
+    }
+
+    .section {
+      margin-top: 34px;
+    }
+
+    .section:first-child {
+      margin-top: 0;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 9px;
+      margin-bottom: 0;
+      border-bottom: 1px solid var(--line-dark);
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 850;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+    }
+
+    .section-index {
+      color: var(--muted);
+      font-size: 11px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    /* Figures grid */
+
+    .figures {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .figure {
+      padding: 18px 20px 20px;
+    }
+
+    .figure + .figure {
+      border-left: 1px solid var(--line);
+    }
+
+    .figure-code {
+      color: var(--accent);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      margin-bottom: 10px;
+    }
+
+    .figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: var(--figure-bg);
+      border: 1px solid var(--line);
+    }
+
+    .figure figcaption {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    /* Documents list */
+
+    .resource-list {
+      background: var(--surface);
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+    }
+
+    .resource {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: center;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .resource-code {
+      color: var(--accent);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+
+    .resource h3 {
+      margin: 0 0 3px;
+      font-size: 16px;
+      font-weight: 780;
+    }
+
+    .resource p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      max-width: 720px;
+    }
+
+    .resource-link {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .resource.primary {
+      background: #f8fbfa;
+      border-left: 3px solid var(--accent);
+      padding-left: 18px;
+    }
+
+    /* Reference grid */
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .data-block {
+      padding: 20px;
+    }
+
+    .data-block + .data-block {
+      border-left: 1px solid var(--line);
+    }
+
+    .data-block h3 {
+      margin: 0 0 13px;
+      font-size: 14px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .spec-table {
+      display: grid;
+      grid-template-columns: minmax(120px, 1fr) auto;
+      border-top: 1px solid var(--line);
+    }
+
+    .spec-table div {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+
+    .spec-table div:nth-child(odd) {
+      color: var(--muted);
+      padding-right: 18px;
+    }
+
+    .spec-table div:nth-child(even) {
+      text-align: right;
+      font-weight: 700;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      background: var(--accent-soft);
+      border: 1px solid #d7e1de;
+      padding: 1px 4px;
+      font-size: .92em;
+    }
+
+    .warning {
+      margin-top: 22px;
+      border: 1px solid var(--warning-line);
+      border-left: 4px solid #8a7644;
+      background: var(--warning-bg);
+      padding: 14px 16px;
+      font-size: 13px;
+    }
+
+    .warning-title {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 850;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    footer {
+      border-top: 1px solid var(--line-dark);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .footer-inner {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 760px) {
+      .container {
+        width: min(var(--max), calc(100% - 22px));
+      }
+
+      .header-bar {
+        align-items: flex-start;
+        padding: 14px 0;
+      }
+
+      .project-id {
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .hero {
+        padding: 34px 0 32px;
+      }
+
+      .figures {
+        grid-template-columns: 1fr;
+      }
+
+      .figure + .figure {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .resource {
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 12px;
+      }
+
+      .resource-link {
+        grid-column: 2;
+        justify-self: start;
+      }
+
+      .data-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .data-block + .data-block {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .footer-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 18px 0;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #101412;
+        --surface: #161b19;
+        --text: #edf1ef;
+        --muted: #9ea8a4;
+        --line: #2a332f;
+        --line-dark: #3a4742;
+        --accent: #7cae9f;
+        --accent-soft: #1d2925;
+        --warning-bg: #292518;
+        --warning-line: #6f623e;
+        --figure-bg: #0f1613;
+      }
+
+      .button.primary {
+        background: #dfeae6;
+        color: #143c34;
+      }
+
+      .resource.primary {
+        background: #17221e;
+      }
+
+      code {
+        border-color: #30423b;
+      }
     }
   </style>
 </head>
+
 <body>
-<header class="hero">
-  <div class="wrap">
-    <div class="hero-top">
-      <span class="badge">DC-UPS-2CH · ESP32 · FW v6</span>
+<header>
+  <div class="container">
+    <div class="header-bar">
+      <div class="project-id">
+        <span class="project-name">DC-UPS-2CH</span>
+        <span class="project-meta">ESP32 / HW v1.0 / FW v6</span>
+      </div>
+
       <div class="lang-switch" aria-label="Language">
-        <button class="lang-btn active" id="lang-en" type="button" onclick="setLanguage('en')">EN</button>
-        <button class="lang-btn" id="lang-ru" type="button" onclick="setLanguage('ru')">RU</button>
+        <button id="lang-en" class="lang-btn active" type="button" onclick="setLanguage('en')">EN</button>
+        <button id="lang-ru" class="lang-btn" type="button" onclick="setLanguage('ru')">RU</button>
       </div>
     </div>
-    <h1>DC-UPS-2CH</h1>
-    <p class="subtitle" data-i18n="subtitle"></p>
-    <div class="actions">
-      <a class="btn main" href="DC_UPS_user_manual_v6.pdf" data-i18n="manualButton"></a>
-      <a class="btn ghost" href="DC_UPS_documentation_v6.pdf" data-i18n="passportButton"></a>
+
+    <div class="hero">
+      <p class="eyebrow" data-i18n="eyebrow"></p>
+      <h1>DC-UPS-2CH</h1>
+      <p class="subtitle" data-i18n="subtitle"></p>
+
+      <div class="actions">
+        <a class="button primary" href="DC_UPS_user_manual_v6.pdf" data-i18n="manualButton"></a>
+        <a class="button secondary" href="DC_UPS_documentation_v6.pdf" data-i18n="passportButton"></a>
+      </div>
     </div>
   </div>
 </header>
 
-<main class="wrap">
+<main class="container">
 
-  <section class="renders">
-    <figure>
-      <img src="https://raw.githubusercontent.com/MrZloHex/dc-ups-2ch/master/hardware/enclosure/renders/exploded-front.png"
-           alt="Exploded isometric — front panel, battery, aluminium extrusion shell">
-      <figcaption data-i18n="renderFront"></figcaption>
-    </figure>
-    <figure>
-      <img src="https://raw.githubusercontent.com/MrZloHex/dc-ups-2ch/master/hardware/enclosure/renders/exploded-rear.png"
-           alt="Exploded isometric — rear panel with two-tier PCB stack (XL4016 charger + 2× XL6009 boosters + ESP32)">
-      <figcaption data-i18n="renderRear"></figcaption>
-    </figure>
-  </section>
-
-  <h2 class="title" data-i18n="docsTitle"></h2>
-
-  <section class="grid">
-    <article class="card featured">
-      <div class="icon">📘</div>
-      <h2 data-i18n="manualTitle"></h2>
-      <p data-i18n="manualText"></p>
-      <a class="link" href="DC_UPS_user_manual_v6.pdf" data-i18n="openPdf"></a>
-    </article>
-
-    <article class="card">
-      <div class="icon">📄</div>
-      <h2 data-i18n="passportTitle"></h2>
-      <p data-i18n="passportText"></p>
-      <a class="link" href="DC_UPS_documentation_v6.pdf" data-i18n="openPdf"></a>
-    </article>
-
-    <article class="card">
-      <div class="icon">🔧</div>
-      <h2 data-i18n="hardwareTitle"></h2>
-      <p data-i18n="hardwareText"></p>
-      <a class="link" href="https://github.com/MrZloHex/dc-ups-2ch/blob/master/docs/HARDWARE.md" data-i18n="openHardware"></a>
-    </article>
-
-    <article class="card">
-      <div class="icon">🧩</div>
-      <h2 data-i18n="enclosureTitle"></h2>
-      <p data-i18n="enclosureText"></p>
-      <a class="link" href="https://github.com/MrZloHex/dc-ups-2ch/tree/master/hardware/enclosure" data-i18n="openEnclosure"></a>
-    </article>
-
-    <article class="card">
-      <div class="icon">💾</div>
-      <h2 data-i18n="firmwareTitle"></h2>
-      <p data-i18n="firmwareText"></p>
-      <a class="link" href="https://github.com/MrZloHex/dc-ups-2ch" data-i18n="openGithub"></a>
-    </article>
-
-    <article class="card">
-      <div class="icon">🏷️</div>
-      <h2 data-i18n="labelTitle"></h2>
-      <p data-i18n="labelText"></p>
-      <a class="link" href="DC_UPS_label_v6.pdf" data-i18n="openPdf"></a>
-    </article>
-  </section>
-
-  <section class="info">
-    <div class="panel">
-      <h2 data-i18n="quickTitle"></h2>
-      <div class="kv">
-        <span data-i18n="localPanel"></span><span><a href="http://dc-ups.local/">dc-ups.local</a></span>
-        <span data-i18n="setupWifi"></span><span><code>DC-UPS-Setup</code></span>
-        <span data-i18n="shortPress"></span><span>STATUS</span>
-        <span data-i18n="doublePress"></span><span>SETUP AP</span>
-        <span data-i18n="hold10"></span><span>STORAGE</span>
-      </div>
+  <section class="section">
+    <div class="section-heading">
+      <h2 data-i18n="figuresTitle"></h2>
+      <span class="section-index">01 / FIGURES</span>
     </div>
 
-    <div class="panel">
-      <h2 data-i18n="specsTitle"></h2>
-      <div class="kv">
-        <span data-i18n="input"></span><span>230 V AC / 50 Hz</span>
-        <span data-i18n="battery"></span><span>12 V · 7 Ah AGM</span>
-        <span data-i18n="charge"></span><span>13.8 V · max 1.5 A</span>
-        <span data-i18n="channels"></span><span>ROUTER + ONT</span>
-        <span data-i18n="controller"></span><span>ESP32</span>
-      </div>
+    <div class="figures">
+      <figure class="figure">
+        <div class="figure-code">FIG-01</div>
+        <img src="https://raw.githubusercontent.com/MrZloHex/dc-ups-2ch/master/hardware/enclosure/renders/exploded-front.png"
+             alt="Exploded isometric — front panel, battery, aluminium extrusion shell">
+        <figcaption data-i18n="figureFront"></figcaption>
+      </figure>
+      <figure class="figure">
+        <div class="figure-code">FIG-02</div>
+        <img src="https://raw.githubusercontent.com/MrZloHex/dc-ups-2ch/master/hardware/enclosure/renders/exploded-rear.png"
+             alt="Exploded isometric — rear panel with two-tier PCB stack (XL4016 charger + 2× XL6009 boosters + ESP32)">
+        <figcaption data-i18n="figureRear"></figcaption>
+      </figure>
     </div>
   </section>
 
-  <div class="warning">
-    <strong data-i18n="safetyTitle"></strong><br>
-    <span data-i18n="safetyText"></span>
-  </div>
+  <section class="section">
+    <div class="section-heading">
+      <h2 data-i18n="docsTitle"></h2>
+      <span class="section-index">02 / DOCUMENTS</span>
+    </div>
+
+    <div class="resource-list">
+      <article class="resource primary">
+        <div class="resource-code">DOC-01</div>
+        <div>
+          <h3 data-i18n="manualTitle"></h3>
+          <p data-i18n="manualText"></p>
+        </div>
+        <a class="resource-link" href="DC_UPS_user_manual_v6.pdf" data-i18n="openPdf"></a>
+      </article>
+
+      <article class="resource">
+        <div class="resource-code">DOC-02</div>
+        <div>
+          <h3 data-i18n="passportTitle"></h3>
+          <p data-i18n="passportText"></p>
+        </div>
+        <a class="resource-link" href="DC_UPS_documentation_v6.pdf" data-i18n="openPdf"></a>
+      </article>
+
+      <article class="resource">
+        <div class="resource-code">HW-01</div>
+        <div>
+          <h3 data-i18n="hardwareTitle"></h3>
+          <p data-i18n="hardwareText"></p>
+        </div>
+        <a class="resource-link" href="https://github.com/MrZloHex/dc-ups-2ch/blob/master/docs/HARDWARE.md" data-i18n="openHardware"></a>
+      </article>
+
+      <article class="resource">
+        <div class="resource-code">CAD-01</div>
+        <div>
+          <h3 data-i18n="enclosureTitle"></h3>
+          <p data-i18n="enclosureText"></p>
+        </div>
+        <a class="resource-link" href="https://github.com/MrZloHex/dc-ups-2ch/tree/master/hardware/enclosure" data-i18n="openEnclosure"></a>
+      </article>
+
+      <article class="resource">
+        <div class="resource-code">FW-01</div>
+        <div>
+          <h3 data-i18n="firmwareTitle"></h3>
+          <p data-i18n="firmwareText"></p>
+        </div>
+        <a class="resource-link" href="https://github.com/MrZloHex/dc-ups-2ch" data-i18n="openGithub"></a>
+      </article>
+
+      <article class="resource">
+        <div class="resource-code">LBL-01</div>
+        <div>
+          <h3 data-i18n="labelTitle"></h3>
+          <p data-i18n="labelText"></p>
+        </div>
+        <a class="resource-link" href="DC_UPS_label_v6.pdf" data-i18n="openPdf"></a>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-heading">
+      <h2 data-i18n="referenceTitle"></h2>
+      <span class="section-index">03 / REFERENCE</span>
+    </div>
+
+    <div class="data-grid">
+      <div class="data-block">
+        <h3 data-i18n="accessTitle"></h3>
+        <div class="spec-table">
+          <div data-i18n="localPanel"></div>
+          <div><a href="http://dc-ups.local/">dc-ups.local</a></div>
+
+          <div data-i18n="setupWifi"></div>
+          <div>DC-UPS-Setup</div>
+
+          <div data-i18n="shortPress"></div>
+          <div>STATUS</div>
+
+          <div data-i18n="doublePress"></div>
+          <div>SETUP AP</div>
+
+          <div data-i18n="hold10"></div>
+          <div>STORAGE</div>
+        </div>
+      </div>
+
+      <div class="data-block">
+        <h3 data-i18n="specsTitle"></h3>
+        <div class="spec-table">
+          <div data-i18n="input"></div>
+          <div>230 V AC / 50 Hz</div>
+
+          <div data-i18n="battery"></div>
+          <div>12 V / 7 Ah AGM</div>
+
+          <div data-i18n="charge"></div>
+          <div>13.8 V / max 1.5 A</div>
+
+          <div data-i18n="channels"></div>
+          <div>ROUTER + ONT</div>
+
+          <div data-i18n="controller"></div>
+          <div>ESP32</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="warning">
+      <span class="warning-title" data-i18n="safetyTitle"></span>
+      <span data-i18n="safetyText"></span>
+    </div>
+  </section>
+
 </main>
 
-<footer class="wrap">
-  <span data-i18n="footer"></span><br>
-  <a href="https://github.com/MrZloHex/dc-ups-2ch/blob/master/README.md">README</a> ·
-  <a href="https://github.com/MrZloHex/dc-ups-2ch/blob/master/CHANGELOG.md">Changelog</a> ·
-  <a href="https://github.com/MrZloHex/dc-ups-2ch">GitHub</a>
+<footer>
+  <div class="container footer-inner">
+    <span data-i18n="footer"></span>
+
+    <div class="footer-links">
+      <a href="https://github.com/MrZloHex/dc-ups-2ch/blob/master/README.md">README</a>
+      <a href="https://github.com/MrZloHex/dc-ups-2ch/blob/master/CHANGELOG.md">CHANGELOG</a>
+      <a href="https://github.com/MrZloHex/dc-ups-2ch">GITHUB</a>
+    </div>
+  </div>
 </footer>
 
 <script>
 const translations = {
   en: {
     pageTitle: "DC-UPS-2CH — Documentation",
-    description: "DC-UPS-2CH documentation, user manual, service information and firmware resources for an ESP32-based dual-channel DC UPS.",
-    subtitle: "Documentation, user manual and service information for the dual-channel ROUTER / ONT backup power supply.",
-    manualButton: "User manual",
-    passportButton: "Full technical passport",
-    renderFront: "Exploded view: front panel, battery, aluminium extrusion",
-    renderRear:  "Exploded view: rear panel, power PCB stack, ESP32",
+    eyebrow: "Technical documentation portal",
+    subtitle: "Documentation, user instructions and service information for the ESP32-based dual-channel backup power supply for ROUTER and ONT equipment.",
+    manualButton: "USER MANUAL",
+    passportButton: "TECHNICAL PASSPORT",
+    figuresTitle: "Figures",
+    figureFront: "FIG-01. Exploded isometric view — front side. Aluminium extrusion enclosure, AGM 12 V / 7 Ah battery installed inside, front panel with IEC C14 mains inlet and two DC output receptacles displaced to the left.",
+    figureRear:  "FIG-02. Exploded isometric view — rear side. Rear panel removed, two-tier power PCB assembly displaced to the right: XL4016 CC/CV charger, two XL6009 boost converters and the ESP32 controller board.",
     docsTitle: "Documentation",
     manualTitle: "User manual",
-    manualText: "Short owner-oriented guide covering startup, battery operation, button controls, Shelf Sleep, Web UI, ntfy and basic troubleshooting.",
-    passportTitle: "Full product passport",
-    passportText: "Technical description, operating modes, safety, maintenance, battery replacement, acceptance tests and warranty information.",
-    hardwareTitle: "Hardware",
-    hardwareText: "BOM, ESP32 pinout, component values, power-channel wiring, calibration and assembly recommendations.",
-    enclosureTitle: "Enclosure & 3D model",
-    enclosureText: "Enclosure files, STEP exports, renders and materials useful for servicing, reproduction and reassembly.",
-    firmwareTitle: "Firmware & source code",
-    firmwareText: "ESP32 source code, PlatformIO configuration, build tooling, changelog and project licensing.",
-    labelTitle: "Device label",
-    labelText: "90 × 55 mm printable device label with main ratings, S/N, date, button hints and a QR code that links here.",
-    openPdf: "Open PDF →",
-    openHardware: "Open HARDWARE.md →",
-    openEnclosure: "Open enclosure files →",
-    openGithub: "Open GitHub →",
-    quickTitle: "Quick access",
-    localPanel: "Local panel",
-    setupWifi: "Setup Wi-Fi",
-    shortPress: "Short press",
-    doublePress: "Double press",
-    hold10: "Hold 10 s",
-    specsTitle: "Main specifications",
+    manualText: "Concise operating instructions for the owner: startup, battery operation, control button functions, Shelf Sleep, Web UI, ntfy and basic troubleshooting.",
+    passportTitle: "Technical passport and full documentation",
+    passportText: "Complete technical description, operating modes, safety requirements, maintenance, battery replacement, acceptance tests and warranty information.",
+    hardwareTitle: "Hardware reference",
+    hardwareText: "Bill of materials, ESP32 pin assignment, component values, power-channel wiring, calibration and assembly notes.",
+    enclosureTitle: "Enclosure and 3D model",
+    enclosureText: "CAD materials, STEP exports, enclosure renders and reference files for service, reproduction and reassembly.",
+    firmwareTitle: "Firmware and source code",
+    firmwareText: "ESP32 firmware source, PlatformIO configuration, build tooling, changelog and project licensing.",
+    labelTitle: "Device identification label",
+    labelText: "Printable 90 × 55 mm identification label with electrical ratings, serial number field, date, control references and QR code that links to this portal.",
+    openPdf: "OPEN PDF",
+    openHardware: "OPEN FILE",
+    openEnclosure: "OPEN CAD",
+    openGithub: "OPEN REPOSITORY",
+    referenceTitle: "Quick reference",
+    accessTitle: "Controls and access",
+    localPanel: "Local Web UI",
+    setupWifi: "Setup access point",
+    shortPress: "Button / short press",
+    doublePress: "Button / double press",
+    hold10: "Button / hold 10 s",
+    specsTitle: "Electrical and system data",
     input: "Input",
     battery: "Battery",
-    charge: "Charge",
-    channels: "Channels",
+    charge: "Charge voltage / current limit",
+    channels: "Output channels",
     controller: "Controller",
-    safetyTitle: "⚠ Safety",
-    safetyText: "Dangerous 230 V mains voltage is present inside the enclosure. Before opening the device, disconnect mains power completely and disconnect the battery.",
-    footer: "DC-UPS-2CH · MrZloHex · project documentation"
+    safetyTitle: "Safety notice",
+    safetyText: "Dangerous 230 V mains voltage is present inside the enclosure. Before opening the device, disconnect the mains supply and disconnect the battery. Do not service the unit while energized.",
+    footer: "DC-UPS-2CH / MrZloHex / Project documentation"
   },
+
   ru: {
     pageTitle: "DC-UPS-2CH — Документация",
-    description: "DC-UPS-2CH — документация, руководство, сервисная информация и материалы прошивки двухканального DC-ИБП на ESP32.",
-    subtitle: "Документация, руководство пользователя и сервисная информация для двухканального резервного источника питания ROUTER / ONT.",
-    manualButton: "Руководство пользователя",
-    passportButton: "Полный технический паспорт",
-    renderFront: "Разнесённый вид: лицевая панель, АКБ, корпус",
-    renderRear:  "Разнесённый вид: задняя панель, плата питания, ESP32",
+    eyebrow: "Портал технической документации",
+    subtitle: "Документация, руководство пользователя и сервисная информация для двухканального резервного источника питания ROUTER и ONT на базе ESP32.",
+    manualButton: "РУКОВОДСТВО",
+    passportButton: "ТЕХНИЧЕСКИЙ ПАСПОРТ",
+    figuresTitle: "Иллюстрации",
+    figureFront: "FIG-01. Разнесённый изометрический вид со стороны лицевой панели. Корпус из алюминиевого профиля, аккумулятор AGM 12 В / 7 А·ч установлен внутри, лицевая панель с входным разъёмом IEC C14 и двумя DC-гнёздами вынесена слева.",
+    figureRear:  "FIG-02. Разнесённый изометрический вид со стороны задней панели. Задняя панель снята, двухъярусная плата питания вынесена справа: зарядный XL4016 CC/CV, два повышающих XL6009 и материнская плата ESP32.",
     docsTitle: "Документация",
     manualTitle: "Руководство по эксплуатации",
-    manualText: "Короткая версия для владельца: включение, работа от АКБ, кнопка, Shelf Sleep, Web UI, ntfy и основные неисправности.",
-    passportTitle: "Полный паспорт изделия",
-    passportText: "Техническое описание, режимы работы, безопасность, обслуживание, замена АКБ, испытания и гарантийный талон.",
+    manualText: "Краткое руководство владельца: запуск, работа от аккумулятора, функции кнопки, Shelf Sleep, Web UI, ntfy и базовая диагностика.",
+    passportTitle: "Технический паспорт и полная документация",
+    passportText: "Полное техническое описание, режимы работы, требования безопасности, обслуживание, замена аккумулятора, приёмочные испытания и гарантийная информация.",
     hardwareTitle: "Аппаратная часть",
-    hardwareText: "BOM, распиновка ESP32, номиналы, подключение силовых каналов, калибровка и рекомендации по сборке.",
+    hardwareText: "Перечень компонентов, распиновка ESP32, номиналы, подключение силовых каналов, калибровка и примечания по сборке.",
     enclosureTitle: "Корпус и 3D-модель",
-    enclosureText: "Файлы корпуса, STEP-экспорт, рендеры и материалы для обслуживания, повторной сборки и воспроизведения.",
+    enclosureText: "CAD-материалы, STEP-файлы, рендеры корпуса и справочные файлы для обслуживания, воспроизведения и повторной сборки.",
     firmwareTitle: "Прошивка и исходный код",
-    firmwareText: "Исходный код ESP32, PlatformIO-конфигурация, сборка, история изменений и лицензия проекта.",
-    labelTitle: "Шильдик устройства",
-    labelText: "Макет наклейки 90 × 55 мм с основными номиналами, S/N, датой, подсказкой по кнопке и QR-кодом, ведущим на эту страницу.",
-    openPdf: "Открыть PDF →",
-    openHardware: "Открыть HARDWARE.md →",
-    openEnclosure: "Открыть файлы корпуса →",
-    openGithub: "Открыть GitHub →",
-    quickTitle: "Быстрый доступ",
-    localPanel: "Локальная панель",
-    setupWifi: "Настройка Wi-Fi",
-    shortPress: "Короткое нажатие",
-    doublePress: "Двойное нажатие",
-    hold10: "Удержание 10 с",
-    specsTitle: "Основные параметры",
+    firmwareText: "Исходный код ESP32, конфигурация PlatformIO, средства сборки, история изменений и лицензирование проекта.",
+    labelTitle: "Идентификационный шильдик",
+    labelText: "Макет шильдика 90 × 55 мм с электрическими номиналами, полями серийного номера и даты, подсказками по управлению и QR-кодом, ведущим на этот портал.",
+    openPdf: "ОТКРЫТЬ PDF",
+    openHardware: "ОТКРЫТЬ ФАЙЛ",
+    openEnclosure: "ОТКРЫТЬ CAD",
+    openGithub: "ОТКРЫТЬ РЕПОЗИТОРИЙ",
+    referenceTitle: "Краткая справка",
+    accessTitle: "Управление и доступ",
+    localPanel: "Локальная Web-панель",
+    setupWifi: "Точка настройки",
+    shortPress: "Кнопка / короткое нажатие",
+    doublePress: "Кнопка / двойное нажатие",
+    hold10: "Кнопка / удержание 10 с",
+    specsTitle: "Электрические и системные данные",
     input: "Вход",
-    battery: "АКБ",
-    charge: "Заряд",
-    channels: "Каналы",
+    battery: "Аккумулятор",
+    charge: "Напряжение / ограничение тока заряда",
+    channels: "Выходные каналы",
     controller: "Контроллер",
-    safetyTitle: "⚠ Безопасность",
-    safetyText: "Внутри корпуса присутствует опасное сетевое напряжение 230 В. Перед вскрытием полностью отключите устройство от сети и отсоедините аккумулятор.",
-    footer: "DC-UPS-2CH · MrZloHex · документация проекта"
+    safetyTitle: "Требования безопасности",
+    safetyText: "Внутри корпуса присутствует опасное сетевое напряжение 230 В. Перед вскрытием отключите устройство от сети и отсоедините аккумулятор.\u00a0Не выполняйте обслуживание под напряжением.",
+    footer: "DC-UPS-2CH / MrZloHex / Документация проекта"
   }
 };
 
 function setLanguage(lang) {
   if (!translations[lang]) lang = "en";
   const t = translations[lang];
+
   document.documentElement.lang = lang;
   document.title = t.pageTitle;
 
   const metaDescription = document.querySelector('meta[name="description"]');
-  if (metaDescription) metaDescription.setAttribute("content", t.description);
+  if (metaDescription) metaDescription.setAttribute("content", t.description || metaDescription.getAttribute("content"));
 
-  document.querySelectorAll("[data-i18n]").forEach(el => {
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.dataset.i18n;
-    if (Object.prototype.hasOwnProperty.call(t, key)) el.textContent = t[key];
+    if (Object.prototype.hasOwnProperty.call(t, key)) {
+      el.textContent = t[key];
+    }
   });
 
   document.getElementById("lang-en").classList.toggle("active", lang === "en");
   document.getElementById("lang-ru").classList.toggle("active", lang === "ru");
+
   document.getElementById("lang-en").setAttribute("aria-pressed", String(lang === "en"));
   document.getElementById("lang-ru").setAttribute("aria-pressed", String(lang === "ru"));
 
-  try { localStorage.setItem("dc-ups-language", lang); } catch (_) {}
+  try {
+    localStorage.setItem("dc-ups-language", lang);
+  } catch (_) {}
 }
 
-// English is used on a first visit; language choice is then remembered locally.
 let initialLanguage = "en";
 try {
   const saved = localStorage.getItem("dc-ups-language");
-  if (saved === "ru" || saved === "en") initialLanguage = saved;
+  if (saved === "en" || saved === "ru") {
+    initialLanguage = saved;
+  }
 } catch (_) {}
 
 setLanguage(initialLanguage);
