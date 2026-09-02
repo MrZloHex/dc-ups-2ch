@@ -1,0 +1,298 @@
+\documentclass[10.5pt,a5paper]{article}
+
+\usepackage{fontspec}
+\setmainfont{DejaVu Serif}
+\setsansfont{DejaVu Sans}
+\setmonofont{DejaVu Sans Mono}
+\usepackage[russian]{babel}
+\usepackage{geometry}
+\geometry{left=13mm,right=13mm,top=14mm,bottom=16mm}
+\usepackage{microtype}
+\usepackage{array,tabularx,booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{qrcode}
+\usepackage{graphicx}
+
+% Build identity — same file as the passport and label. Fallbacks let this
+% .tex compile standalone in a TeX editor without `make`.
+\IfFileExists{build_info.tex}{\input{build_info}}{%
+  \newcommand{\hwversion}{v1.0}%
+  \newcommand{\fwversion}{dev}%
+  \newcommand{\builddate}{unknown}%
+  \newcommand{\buildcommit}{unknown}%
+  \newcommand{\docrev}{unknown}%
+}
+
+% Public documentation site (GitHub Pages). Also the URL encoded in the
+% QR code on the enclosure label — change in one place and everything follows.
+\newcommand{\docsurl}{https://mrzlohex.github.io/dc-ups-2ch/}
+
+\definecolor{accent}{HTML}{1E5B4F}
+\definecolor{lightaccent}{HTML}{EAF3F1}
+\definecolor{warn}{HTML}{8B1E1E}
+\definecolor{lightwarn}{HTML}{F9ECEC}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=accent,
+  pdfauthor={Изготовитель DC-UPS-2CH},
+  pdftitle={Краткое руководство по эксплуатации DC-UPS-2CH \fwversion}
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.4em}
+\renewcommand{\arraystretch}{1.15}
+\setlist[itemize]{leftmargin=5.5mm,itemsep=1.5pt,topsep=2pt}
+\setlist[enumerate]{leftmargin=6.5mm,itemsep=2pt,topsep=2pt}
+
+\titleformat{\section}{\large\bfseries\color{accent}}{\thesection.}{0.45em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.45em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\sffamily DC-UPS-2CH}
+\rhead{\sffamily Руководство}
+\cfoot{\sffamily\small \thepage}
+\renewcommand{\headrulewidth}{0.35pt}
+\setlength{\headheight}{13pt}
+
+\newtcolorbox{infobox}[1][]{colback=lightaccent,colframe=accent,boxrule=0.7pt,arc=1.5mm,left=2mm,right=2mm,top=1.5mm,bottom=1.5mm,#1}
+\newtcolorbox{warnbox}[1][]{colback=lightwarn,colframe=warn,boxrule=0.7pt,arc=1.5mm,left=2mm,right=2mm,top=1.5mm,bottom=1.5mm,#1}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{10mm}
+{\sffamily\bfseries\fontsize{24}{28}\selectfont DC-UPS-2CH\\[2mm]}
+{\sffamily\Large Краткое руководство по эксплуатации\\[5mm]}
+{\sffamily\small для прошивки \fwversion\ (сборка \buildcommit, \builddate)}
+
+\vspace{9mm}
+\begin{infobox}
+\centering
+Двухканальный источник резервного питания для роутера, ONT и другого совместимого слаботочного оборудования.
+\end{infobox}
+
+\vspace{7mm}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+Модель & DC-UPS-2CH \hwversion \\
+Серийный номер & \rule{45mm}{0.4pt} \\
+Дата передачи & \rule{45mm}{0.4pt} \\
+Выход ROUTER & \rule{18mm}{0.4pt} В / \rule{18mm}{0.4pt} А \\
+Выход ONT & \rule{18mm}{0.4pt} В / \rule{18mm}{0.4pt} А \\
+\bottomrule
+\end{tabularx}
+
+\vfill
+\begin{warnbox}
+\textbf{Внимание.} Внутри корпуса присутствует сетевое напряжение 230~В. Пользователь не должен вскрывать корпус при подключённой сети или аккумуляторе.
+\end{warnbox}
+\vfill
+{\small Хранить руководство рядом с устройством.}
+\end{titlepage}
+
+\section{Что делает устройство}
+
+DC-UPS-2CH автоматически поддерживает питание двух независимых выходов \textbf{ROUTER} и \textbf{ONT}. В обычном режиме устройство питается от сети и поддерживает аккумулятор в заряженном состоянии. При отключении 230~В переход на аккумулятор происходит автоматически, без действий пользователя.
+
+\begin{tabularx}{\textwidth}{@{}p{44mm}X@{}}
+\toprule
+\textbf{Параметр} & \textbf{Значение} \\
+\midrule
+Сеть & 230~В AC, 50~Гц \\
+Аккумулятор & 12~В, 7~А\,ч, AGM/SLA \\
+Поддерживающий заряд & 13,8~В \\
+Ограничение зарядного тока & 1,5~А \\
+Предупреждение АКБ & 11,5~В \\
+Отключение нагрузки (LVD) & 11,0~В \\
+Разрешение повторного запуска & 12,5~В \\
+\bottomrule
+\end{tabularx}
+
+\begin{infobox}[title=Нормальная работа]
+При пропадании света ничего переключать не требуется. ROUTER и ONT продолжают работу от аккумулятора, пока его напряжение не достигнет защитного порога.
+\end{infobox}
+
+\section{Ежедневное использование}
+
+\subsection{Включение}
+\begin{enumerate}
+  \item Убедиться, что подключены нужные выходы ROUTER и ONT.
+  \item Если на корпусе есть отдельные механические выключатели выходов, перевести требуемые каналы во включённое положение.
+  \item Подать 230~В.
+  \item Дождаться запуска оборудования и Wi-Fi.
+\end{enumerate}
+
+В штатной эксплуатации дальнейшее ручное управление не требуется.
+
+\subsection{При отключении электричества}
+Устройство автоматически переходит на АКБ. При наличии связи отправляется уведомление ntfy. При снижении АКБ до 11,5~В отправляется предупреждение. При достижении 11,0~В оба управляемых выхода отключаются для защиты батареи.
+
+После защитного отключения ESP32 переходит в аварийный deep sleep. Она периодически просыпается и проверяет возврат внешнего питания. Когда сеть вернётся, устройство автоматически возобновит штатную работу.
+
+\begin{warnbox}[title=Не путать с режимом хранения]
+После аварийного deep sleep устройство просыпается от возврата сети автоматически. В \textbf{режиме хранения} возврат 230~В устройство не будит.
+\end{warnbox}
+
+\section{Кнопка и индикация}
+
+\subsection{Сервисная кнопка}
+\begin{tabularx}{\textwidth}{@{}p{35mm}X@{}}
+\toprule
+\textbf{Действие} & \textbf{Результат} \\
+\midrule
+1 короткое нажатие & Отправить полный статус в ntfy \\
+2 коротких нажатия & Включить \texttt{DC-UPS-Setup} примерно на 15 минут \\
+Удержание 10~с & Перейти в Shelf Sleep / режим хранения \\
+Нажатие в Shelf Sleep & Разбудить устройство и выполнить обычный запуск \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Подтверждение кнопки}
+\begin{itemize}
+  \item 2 зелёных мигания --- статус успешно отправлен в ntfy;
+  \item 3 красных мигания --- статус отправить не удалось;
+  \item краткое совместное мигание LED --- запущен setup AP;
+  \item 3 красных мигания перед выключением --- принят переход в режим хранения.
+\end{itemize}
+
+\subsection{Обычная индикация}
+\begin{tabularx}{\textwidth}{@{}p{35mm}X@{}}
+\toprule
+Зелёный LED & наличие внешнего питания / сети \\
+Красный LED & состояние АКБ, предупреждение или аварийный режим \\
+\bottomrule
+\end{tabularx}
+
+\section{Режим хранения}
+
+Shelf Sleep предназначен для перевозки или длительного хранения устройства, когда оба выхода и Wi-Fi должны быть полностью отключены.
+
+\textbf{Чтобы выключить устройство для хранения:}
+\begin{enumerate}
+  \item Удерживать сервисную кнопку около 10 секунд.
+  \item Дождаться трёх красных миганий.
+  \item Отпустить кнопку.
+  \item ROUTER и ONT будут отключены, Wi-Fi выключится, ESP32 уйдёт в deep sleep без периодического таймера.
+\end{enumerate}
+
+\textbf{Чтобы снова включить устройство:} один раз нажать сервисную кнопку.
+
+\begin{warnbox}[title=Важно]
+В Shelf Sleep устройство просыпается \textbf{только от физической кнопки}. Подключение или возврат 230~В само по себе его не включает.
+\end{warnbox}
+
+\section{Веб-панель и Wi-Fi}
+
+При подключении к домашней сети панель доступна по адресу:
+\begin{center}
+\large\texttt{http://dc-ups.local/}
+\end{center}
+
+Также можно использовать IP-адрес, присланный через ntfy.
+
+Через панель можно просматривать напряжения, состояние сети и выходов, Wi-Fi, интернет и журнал событий; управлять режимами ROUTER/ONT; выполнять restart каналов; менять Wi-Fi, ntfy и защитные параметры.
+
+\subsection{Если домашний Wi-Fi недоступен}
+Дважды быстро нажать сервисную кнопку. Появится точка доступа:
+
+\begin{center}
+\texttt{DC-UPS-Setup}
+\end{center}
+
+Пароль по умолчанию: \texttt{dc-ups-setup}, если он не был изменён при настройке.
+
+\section{ntfy}
+
+Устройство само отправляет уведомления о важных событиях. Кроме этого, в тот же topic можно отправить одну из команд:
+
+\begin{center}
+\texttt{!ups}\qquad \texttt{!ups status}\qquad \texttt{!ups ping}
+\end{center}
+
+Команды только запрашивают состояние и \textbf{не управляют питанием выходов}. Ответ включает напряжение АКБ, 24~В, состояние сети, ROUTER/ONT, интернет, uptime, RSSI и IP.
+
+\begin{infobox}
+Команды ntfy работают только когда ESP32 включена, подключена к Wi-Fi и имеет доступ в интернет. В аварийном deep sleep и Shelf Sleep Wi-Fi выключен.
+\end{infobox}
+
+\section{Подключение оборудования}
+
+Перед подключением нового роутера, ONT или другого устройства обязательно проверить:
+\begin{itemize}
+  \item требуемое выходное напряжение;
+  \item полярность разъёма;
+  \item допустимый ток соответствующего выхода;
+  \item маркировку ROUTER / ONT на корпусе.
+\end{itemize}
+
+Для типового цилиндрического DC-разъёма данного экземпляра полярность должна соответствовать маркировке на корпусе. Не подключать оборудование, если напряжение или полярность неизвестны.
+
+\section{Если что-то не работает}
+
+\begin{tabularx}{\textwidth}{@{}p{43mm}X@{}}
+\toprule
+\textbf{Симптом} & \textbf{Что сделать} \\
+\midrule
+Нет питания на выходах & Проверить сеть, механические выключатели, состояние АКБ и режимы каналов в панели \\
+Нет веб-панели & Попробовать \texttt{dc-ups.local}; затем дважды нажать кнопку и подключиться к setup AP \\
+После отключения света выходы выключились & Возможен нормальный LVD при низком АКБ; дождаться возврата сети \\
+После подачи 230~В устройство не запускается & Если ранее включён Shelf Sleep --- нажать сервисную кнопку \\
+3 красных мигания после короткого нажатия & Статус в ntfy не отправлен; проверить Wi-Fi/интернет/topic \\
+\bottomrule
+\end{tabularx}
+
+Если неисправность повторяется, не вскрывать устройство под напряжением и обратиться к изготовителю/сборщику.
+
+\section{Безопасность и обслуживание}
+
+\begin{itemize}
+  \item не эксплуатировать устройство с открытым корпусом;
+  \item не допускать воды, конденсата и перекрытия вентиляции;
+  \item не замыкать клеммы аккумулятора;
+  \item не превышать параметры выходов, указанные на наклейке;
+  \item аккумулятор является расходным элементом и со временем теряет ёмкость;
+  \item при заметном сокращении времени автономной работы аккумулятор следует проверить и при необходимости заменить в соответствии с полной сервисной документацией.
+\end{itemize}
+
+\begin{warnbox}
+Перед вскрытием корпуса необходимо отключить 230~В и аккумулятор. Внутреннее обслуживание предназначено для подготовленного лица.
+\end{warnbox}
+
+\newpage
+\section*{Быстрая памятка}
+
+\begin{infobox}
+\textbf{Обычная работа:} ничего переключать не нужно.\\
+\textbf{Свет пропал:} устройство работает от АКБ автоматически.\\
+\textbf{Свет вернулся:} после аварийного сна устройство восстановится автоматически.\\
+\textbf{1x кнопка:} статус в ntfy.\\
+\textbf{2x кнопка:} setup AP.\\
+\textbf{10 с кнопка:} режим хранения.\\
+\textbf{Из хранения:} нажать кнопку.\\
+\textbf{Панель:} \texttt{http://dc-ups.local/}.\\
+\textbf{ntfy:} \texttt{!ups status} или \texttt{!ups ping}.
+\end{infobox}
+
+\vspace{7mm}
+\begin{center}
+\qrcode[height=32mm]{http://dc-ups.local/}\\[2mm]
+{\small Локальная веб-панель (при подключении к той же сети и поддержке mDNS).}
+\end{center}
+
+\vfill
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+Контакт изготовителя: & \rule{50mm}{0.4pt} \\
+Дата документа: & 02.09.2026 \\
+Редакция: & Руководство v6 / Rev. 1 \\
+\end{tabularx}
+
+\end{document}

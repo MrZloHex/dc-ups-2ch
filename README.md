@@ -7,7 +7,6 @@
 > read-only status commands back through the same ntfy topic.
 
 **Firmware version:** `2026.09.02-v6` · **License:** [GPL-3.0-or-later](LICENSE)
-· [Русская версия README](README.ru.md)
 · [Full Russian passport & manual (LaTeX)](docs/DC_UPS_documentation_v6.tex)
 
 <p align="center">
@@ -25,12 +24,6 @@
 ---
 
 ## Why this exists
-
-A rural Wi-Fi router + fibre ONT combo needs to stay online during frequent short
-mains outages. Off-the-shelf DC-UPS boards do the raw switching but give you
-zero visibility: no notification when the mains dies, no way to power-cycle
-just the ONT when your provider's WAN glitches, no low-battery protection you
-can actually tune.
 
 This project keeps the hardware boring (all modules you can buy on any
 marketplace) and puts the intelligence in the ESP32 firmware:
@@ -71,26 +64,6 @@ marketplace) and puts the intelligence in the ESP32 firmware:
 ```
 
 Full wiring, GPIO map, calibration and BOM: [`docs/HARDWARE.md`](docs/HARDWARE.md).
-
-## Firmware architecture
-
-The firmware is intentionally free of external libraries — everything ships in
-Arduino-ESP32 core. Code is split into small modules that all share global
-state through `include/ups_common.h`:
-
-| Module           | Responsibility                                                         |
-|------------------|------------------------------------------------------------------------|
-| `main.cpp`       | `setup()` / `loop()` orchestration only                                |
-| `ups_common.*`   | pins, timing constants, enums, `Config` struct, common utilities       |
-| `config_store.*` | NVS `Preferences` load/save + validation                               |
-| `hardware.*`     | LED patterns, button state machine, wake-cause handling                |
-| `power.*`        | load control, LVD, per-channel modes, power-cycle scheduler            |
-| `wifi_mgr.*`     | STA/AP, captive portal, mDNS, manual & automatic reconnect             |
-| `ntfy.*`         | outgoing pushes + inbound command polling (no HTTPS libs beyond core)  |
-| `sleep_modes.*`  | emergency deep-sleep + shelf-sleep, RTC-memory bookkeeping             |
-| `recovery.*`     | internet health probes (TCP to 1.1.1.1:443 / 8.8.8.8:53), staged fixes |
-| `web_ui.*`       | `WebServer` handlers + inline HTML/CSS/JS panel                        |
-| `event_log.*`    | in-RAM ring-buffer log                                                 |
 
 ## Getting started
 
@@ -142,7 +115,7 @@ target.
 3. From now on the panel lives at `http://dc-ups.local/` (mDNS) or the IP the
    ESP32 pushes to your ntfy topic on every successful connect.
 
-### Button reference (GPIO14)
+### Button reference
 
 | Gesture               | Action                                                          |
 |-----------------------|-----------------------------------------------------------------|
@@ -163,13 +136,6 @@ Send any of these to your topic (e.g. from the ntfy app or `curl`):
 The device polls the topic ~every 15 s while online. There are **no
 inbound control commands** on purpose: the topic is only a read-only status
 channel.
-
-## Safety
-
-The enclosure contains live 230 V AC. Do not open with mains connected and
-without disconnecting the battery — SLA batteries can deliver hundreds of amps
-into a short. See [`docs/HARDWARE.md`](docs/HARDWARE.md#safety) and the
-Russian manual for full teardown / battery replacement procedure.
 
 ## Documentation
 
