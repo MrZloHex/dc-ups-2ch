@@ -137,8 +137,8 @@ void handleWifiConnected()
     everWifiConnected = true;
     queueIpNotification(reason);
 
-    // Если подключились из captive portal — оставляем AP ещё на 15 секунд,
-    // чтобы браузер успел увидеть новый IP, затем выключаем setup-AP.
+    // If we came in through the captive portal, keep the AP alive briefly
+    // so the browser sees the new IP, then shut it down.
     if (portalActive && !manualPortalSession)
         portalStopAt = millis() + PORTAL_STOP_DELAY_MS;
 }

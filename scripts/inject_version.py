@@ -75,8 +75,6 @@ version    = resolve_version()
 git_hash   = resolve_git_hash()
 build_date = resolve_build_date()
 
-# Escaping: PlatformIO / SCons then the compiler both eat one backslash each,
-# so \\" survives all the way to gcc as a literal quote around the string.
 env.Append(CPPDEFINES=[  # noqa: F821
     ("FW_VERSION",    f'\\"{version}\\"'),
     ("FW_GIT_HASH",   f'\\"{git_hash}\\"'),
