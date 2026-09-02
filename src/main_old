@@ -1,0 +1,1122 @@
+/*
+ * ИБП-контроллер на ESP32 — ntfy + веб-панель + WiFi recovery
+ * ==================================================================
+ *  - замер АКБ и 24В через ADC1
+ *  - детект наличия сети с гистерезисом и антидребезгом
+ *  - управление нагрузкой (P-MOSFET через NPN) на GPIO32
+ *  - защита АКБ от глубокого разряда
+ *  - ntfy-уведомления
+ *  - веб-панель
+ *  - captive portal DC-UPS-Setup, если WiFi не поднялся
+ *  - повторная попытка подключения к WiFi из портала БЕЗ перезагрузки
+ *  - при каждом успешном подключении к WiFi в ntfy отправляется IP панели
+ *
+ * Делители 100к/10к -> x11. Замеры строго на ADC1 (GPIO32-39).
+ * Внешних библиотек не требуется.
+ *
+ * ЖЕЛЕЗО:
+ *  - P-MOSFET high-side управляется через 2N2222/NPN.
+ *  - GPIO HIGH -> NPN открыт -> gate P-MOSFET вниз -> НАГРУЗКА ВКЛ.
+ *  - Подтяжка gate P-MOSFET к source: 10 кОм.
+ * ==================================================================
+ */
+
+#include <Arduino.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include <DNSServer.h>
+#include <Preferences.h>
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
+#include "esp_task_wdt.h"
+
+// -------------------- ПИНЫ --------------------
+#define PIN_VBATT    35
+#define PIN_VGRID    34
+#define PIN_LOAD     32
+#define PIN_LED_GRID 13
+#define PIN_LED_BATT 12
+
+// -------------------- ADC --------------------
+const float DIV_VBATT = (100.0 + 10.0) / 10.0;   // 11.0
+const float DIV_VGRID = (100.0 + 10.0) / 10.0;   // 11.0
+
+// -------------------- WiFi / WDT --------------------
+#define AP_SSID "DC-UPS-Setup"
+#define WDT_TIMEOUT 30
+
+// Время, которое даём роутеру/ONT поднять WiFi после включения нагрузки.
+// Если твой роутер стартует быстрее, можно уменьшить.
+const uint32_t ROUTER_BOOT_MS           = 25000UL;
+const uint32_t WIFI_CONNECT_TIMEOUT_MS  = 30000UL;
+const uint32_t WIFI_RECONNECT_MS        = 20000UL;
+const uint32_t PORTAL_STOP_DELAY_MS     = 15000UL;
+const uint32_t NTFY_RETRY_MS            = 10000UL;
+
+struct Config
+{
+    String ssid, pass, ntfy;
+    float calVbatt, calVgrid;
+    float battCutoff, battRestore, battWarn;
+    float gridOn, gridOff;
+    uint32_t gridDebounce;
+};
+
+Config cfg;
+Preferences prefs;
+WebServer server(80);
+DNSServer dns;
+
+enum Mode      { MODE_RUN, MODE_PORTAL };
+enum BattState { BATT_OK, BATT_WARN, BATT_CRIT };
+enum LoadMode  { LM_AUTO, LM_ON, LM_OFF };
+enum WifiRetryState { WIFI_RETRY_IDLE, WIFI_RETRY_WAIT_ROUTER, WIFI_RETRY_CONNECTING };
+
+Mode mode = MODE_RUN;
+BattState battState = BATT_OK;
+LoadMode loadMode = LM_AUTO;
+WifiRetryState wifiRetryState = WIFI_RETRY_IDLE;
+
+bool loadOn = false;
+bool gridPresent = true;
+bool gridCandidate = true;
+bool warnSent = false;
+bool lvdTripped = false;
+
+bool portalActive = false;
+bool webStarted = false;
+bool wifiWasConnected = false;
+bool everWifiConnected = false;
+
+bool ntfyIpPending = false;
+String ntfyIpReason;
+
+unsigned long gridChangeSince = 0;
+unsigned long lastTick = 0;
+unsigned long lastReconnect = 0;
+unsigned long loadTurnedOnAt = 0;
+unsigned long wifiRetryStarted = 0;
+unsigned long wifiRetryWaitUntil = 0;
+unsigned long portalStopAt = 0;
+unsigned long ntfyNextTry = 0;
+
+float lastVbatt = 0.0f;
+float lastVgrid = 0.0f;
+String wifiStatusText = "инициализация";
+
+// ============================================================
+// CONFIG
+// ============================================================
+
+void loadConfig()
+{
+    prefs.begin("ups", true);
+
+    cfg.ssid = prefs.getString("ssid", "");
+    cfg.pass = prefs.getString("pass", "");
+    cfg.ntfy = prefs.getString("ntfy", "");
+
+    cfg.calVbatt = prefs.getFloat("calVbatt", 1.0f);
+    cfg.calVgrid = prefs.getFloat("calVgrid", 1.0f);
+
+    cfg.battCutoff  = prefs.getFloat("cutoff",  11.0f);
+    cfg.battRestore = prefs.getFloat("restore", 12.5f);
+    cfg.battWarn    = prefs.getFloat("warn",    11.5f);
+
+    cfg.gridOn  = prefs.getFloat("gridOn",  15.0f);
+    cfg.gridOff = prefs.getFloat("gridOff", 10.0f);
+    cfg.gridDebounce = prefs.getUInt("deb", 3000);
+
+    prefs.end();
+}
+
+void saveConfig()
+{
+    prefs.begin("ups", false);
+
+    prefs.putString("ssid", cfg.ssid);
+    prefs.putString("pass", cfg.pass);
+    prefs.putString("ntfy", cfg.ntfy);
+
+    prefs.putFloat("calVbatt", cfg.calVbatt);
+    prefs.putFloat("calVgrid", cfg.calVgrid);
+
+    prefs.putFloat("cutoff",  cfg.battCutoff);
+    prefs.putFloat("restore", cfg.battRestore);
+    prefs.putFloat("warn",    cfg.battWarn);
+
+    prefs.putFloat("gridOn",  cfg.gridOn);
+    prefs.putFloat("gridOff", cfg.gridOff);
+    prefs.putUInt("deb",      cfg.gridDebounce);
+
+    prefs.end();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+void waitWithWatchdog(uint32_t ms)
+{
+    unsigned long started = millis();
+    while (millis() - started < ms)
+    {
+        esp_task_wdt_reset();
+        delay(100);
+    }
+}
+
+float readVoltage(int pin, float div, float cal)
+{
+    uint32_t acc = 0;
+    for (uint8_t i = 0; i < 32; ++i)
+    {
+        acc += analogReadMilliVolts(pin);
+        delay(2);
+    }
+    return ((acc / 32.0f) / 1000.0f) * div * cal;
+}
+
+BattState getBattState(float vb)
+{
+    if (vb <= cfg.battCutoff) return BATT_CRIT;
+    if (vb <= cfg.battWarn)   return BATT_WARN;
+    return BATT_OK;
+}
+
+void setLoad(bool on)
+{
+    if (loadOn == on)
+        return;
+
+    loadOn = on;
+    digitalWrite(PIN_LOAD, on ? HIGH : LOW);
+
+    if (on)
+    {
+        loadTurnedOnAt = millis();
+        Serial.println("LOAD -> ON");
+    }
+    else
+    {
+        Serial.println("LOAD -> OFF");
+    }
+}
+
+void updateLeds()
+{
+    digitalWrite(PIN_LED_GRID, gridPresent ? HIGH : LOW);
+
+    bool red;
+    if (battState == BATT_CRIT || (!gridPresent && !loadOn))
+    {
+        red = true;
+    }
+    else if (gridPresent && battState == BATT_OK)
+    {
+        red = false;
+    }
+    else
+    {
+        const int period = (battState == BATT_WARN) ? 250 : 1000;
+        red = ((millis() / period) % 2) != 0;
+    }
+
+    digitalWrite(PIN_LED_BATT, red ? HIGH : LOW);
+}
+
+String htmlEscape(String s)
+{
+    s.replace("&", "&amp;");
+    s.replace("\"", "&quot;");
+    s.replace("'", "&#39;");
+    s.replace("<", "&lt;");
+    s.replace(">", "&gt;");
+    return s;
+}
+
+String jsonEscape(String s)
+{
+    s.replace("\\", "\\\\");
+    s.replace("\"", "\\\"");
+    s.replace("\r", "\\r");
+    s.replace("\n", "\\n");
+    return s;
+}
+
+String panelUrl()
+{
+    if (WiFi.status() != WL_CONNECTED)
+        return "";
+
+    return "http://" + WiFi.localIP().toString() + "/";
+}
+
+// ============================================================
+// NTFY
+// ============================================================
+
+bool sendNtfy(const String &text)
+{
+    if (WiFi.status() != WL_CONNECTED || cfg.ntfy == "")
+        return false;
+
+    WiFiClientSecure client;
+    HTTPClient http;
+
+    client.setInsecure();
+    client.setTimeout(5000);
+
+    String url = "https://ntfy.sh/" + cfg.ntfy;
+
+    if (!http.begin(client, url))
+        return false;
+
+    http.setTimeout(5000);
+    http.addHeader("Title", "Дача Роутер ИБП");
+    http.addHeader("Content-Type", "text/plain; charset=utf-8");
+
+    int code = http.POST(text);
+
+    if (code < 200 || code >= 300)
+    {
+        Serial.printf("[ntfy] -> %d", code);
+        if (code > 0)
+            Serial.printf(": %s", http.getString().c_str());
+        Serial.println();
+    }
+
+    http.end();
+    return code >= 200 && code < 300;
+}
+
+void queueIpNotification(const String &reason)
+{
+    if (cfg.ntfy == "")
+        return;
+
+    ntfyIpReason = reason;
+    ntfyIpPending = true;
+    ntfyNextTry = millis() + 1200;
+}
+
+void ntfyTick()
+{
+    if (!ntfyIpPending)
+        return;
+
+    if (WiFi.status() != WL_CONNECTED)
+        return;
+
+    if ((long)(millis() - ntfyNextTry) < 0)
+        return;
+
+    String msg = ntfyIpReason +
+                 "\nАдрес панели: " + panelUrl() +
+                 "\nАКБ: " + String(lastVbatt, 1) + " В" +
+                 "\nСеть: " + String(gridPresent ? "есть" : "нет");
+
+    if (sendNtfy(msg))
+    {
+        ntfyIpPending = false;
+        Serial.println("[ntfy] IP sent: " + panelUrl());
+    }
+    else
+    {
+        ntfyNextTry = millis() + NTFY_RETRY_MS;
+    }
+}
+
+// ============================================================
+// WIFI
+// ============================================================
+
+void handleWifiConnected()
+{
+    String ip = WiFi.localIP().toString();
+
+    wifiStatusText = "подключено: " + ip;
+    mode = MODE_RUN;
+
+    Serial.println("WiFi OK, IP: " + ip + " -> " + panelUrl());
+    Serial.println("[ntfy] topic: " + (cfg.ntfy == "" ? String("NOT SET") : cfg.ntfy));
+
+    String reason;
+    if (!everWifiConnected)
+        reason = "ИБП запущен и подключён к WiFi.";
+    else
+        reason = "WiFi снова подключён.";
+
+    everWifiConnected = true;
+    queueIpNotification(reason);
+
+    // Если подключились из captive portal — оставляем AP ещё на 15 секунд,
+    // чтобы браузер успел увидеть новый IP, затем выключаем setup-AP.
+    if (portalActive)
+        portalStopAt = millis() + PORTAL_STOP_DELAY_MS;
+}
+
+void stopPortal()
+{
+    if (!portalActive)
+        return;
+
+    dns.stop();
+    WiFi.softAPdisconnect(true);
+    portalActive = false;
+    portalStopAt = 0;
+
+    if (WiFi.status() == WL_CONNECTED)
+        WiFi.mode(WIFI_STA);
+
+    Serial.println("Setup portal stopped");
+}
+
+void startPortal()
+{
+    if (!portalActive)
+    {
+        // AP+STA: портал остаётся доступен, пока ESP параллельно пробует
+        // подключиться к домашней сети.
+        WiFi.mode(WIFI_AP_STA);
+
+        if (WiFi.softAP(AP_SSID))
+        {
+            dns.start(53, "*", WiFi.softAPIP());
+            portalActive = true;
+            Serial.printf("Portal: net \"%s\", http://%s\n",
+                          AP_SSID,
+                          WiFi.softAPIP().toString().c_str());
+        }
+        else
+        {
+            Serial.println("ERROR: softAP start failed");
+        }
+    }
+
+    mode = MODE_PORTAL;
+    portalStopAt = 0;
+
+    if (WiFi.status() != WL_CONNECTED)
+        wifiStatusText = "портал настройки";
+}
+
+bool connectSTABlocking(uint32_t timeoutMs)
+{
+    if (cfg.ssid == "")
+        return false;
+
+    WiFi.mode(WIFI_STA);
+    WiFi.setAutoReconnect(true);
+    WiFi.begin(cfg.ssid.c_str(), cfg.pass.c_str());
+
+    wifiStatusText = "подключение к " + cfg.ssid;
+    Serial.println("Connecting WiFi: " + cfg.ssid);
+
+    unsigned long t0 = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - t0 < timeoutMs)
+    {
+        esp_task_wdt_reset();
+        delay(200);
+    }
+
+    return WiFi.status() == WL_CONNECTED;
+}
+
+void beginPortalStaAttempt()
+{
+    if (cfg.ssid == "")
+    {
+        wifiRetryState = WIFI_RETRY_IDLE;
+        wifiStatusText = "SSID не задан";
+        return;
+    }
+
+    // Портал не выключаем: остаёмся AP+STA.
+    if (!portalActive)
+        startPortal();
+    else
+        WiFi.mode(WIFI_AP_STA);
+
+    WiFi.disconnect(false, false);
+    delay(50);
+    WiFi.begin(cfg.ssid.c_str(), cfg.pass.c_str());
+
+    wifiRetryState = WIFI_RETRY_CONNECTING;
+    wifiRetryStarted = millis();
+    wifiStatusText = "подключение к " + cfg.ssid;
+
+    Serial.println("Portal retry WiFi: " + cfg.ssid);
+}
+
+bool requestPortalWifiRetry(String &answer)
+{
+    if (cfg.ssid == "")
+    {
+        answer = "SSID не сохранён. Сначала укажи WiFi в настройках и сохрани.";
+        return false;
+    }
+
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        answer = "WiFi уже подключён. Адрес: " + panelUrl();
+        return true;
+    }
+
+    if (wifiRetryState != WIFI_RETRY_IDLE)
+    {
+        answer = "Попытка подключения уже выполняется.";
+        return true;
+    }
+
+    // ESP управляет питанием самого роутера. Поэтому перед WiFi-подключением
+    // роутер обязательно должен быть включён.
+    if (!loadOn)
+    {
+        if (loadMode == LM_OFF)
+        {
+            answer = "Нагрузка выключена вручную. Сначала включи её или поставь режим Авто.";
+            return false;
+        }
+
+        if (!gridPresent && lastVbatt <= cfg.battCutoff)
+        {
+            answer = "Нельзя включить роутер: АКБ ниже порога отсечки.";
+            return false;
+        }
+
+        setLoad(true);
+    }
+
+    unsigned long readyAt = loadTurnedOnAt + ROUTER_BOOT_MS;
+    if ((long)(millis() - readyAt) < 0)
+    {
+        wifiRetryState = WIFI_RETRY_WAIT_ROUTER;
+        wifiRetryWaitUntil = readyAt;
+        wifiStatusText = "ждём загрузку роутера";
+        answer = "Роутер включён. Ждём его загрузку, затем ESP подключится автоматически.";
+    }
+    else
+    {
+        beginPortalStaAttempt();
+        answer = "Повторная попытка подключения к WiFi запущена.";
+    }
+
+    return true;
+}
+
+void wifiRetryTick()
+{
+    if (wifiRetryState == WIFI_RETRY_WAIT_ROUTER)
+    {
+        if ((long)(millis() - wifiRetryWaitUntil) >= 0)
+            beginPortalStaAttempt();
+        return;
+    }
+
+    if (wifiRetryState == WIFI_RETRY_CONNECTING)
+    {
+        if (WiFi.status() == WL_CONNECTED)
+        {
+            wifiRetryState = WIFI_RETRY_IDLE;
+            wifiStatusText = "подключено: " + WiFi.localIP().toString();
+            return; // переход обработает wifiTick()
+        }
+
+        if (millis() - wifiRetryStarted >= WIFI_CONNECT_TIMEOUT_MS)
+        {
+            wifiRetryState = WIFI_RETRY_IDLE;
+            wifiStatusText = "не удалось подключиться; портал активен";
+            mode = MODE_PORTAL;
+            Serial.println("Portal WiFi retry failed");
+        }
+    }
+}
+
+void wifiTick()
+{
+    bool connected = (WiFi.status() == WL_CONNECTED);
+
+    if (connected && !wifiWasConnected)
+    {
+        wifiWasConnected = true;
+        handleWifiConnected();
+    }
+    else if (!connected && wifiWasConnected)
+    {
+        wifiWasConnected = false;
+        wifiStatusText = portalActive ? "портал настройки" : "WiFi отключён";
+        Serial.println("WiFi disconnected");
+    }
+
+    // Остановить setup AP через некоторое время после успешного подключения.
+    if (portalActive && portalStopAt != 0 && connected &&
+        (long)(millis() - portalStopAt) >= 0)
+    {
+        stopPortal();
+    }
+
+    // В штатном режиме пробуем восстановить STA автоматически.
+    // Если нагрузка выключена, бессмысленно искать WiFi выключенного роутера.
+    if (!connected && !portalActive && loadOn && cfg.ssid != "" &&
+        wifiRetryState == WIFI_RETRY_IDLE)
+    {
+        // После включения нагрузки даём роутеру время загрузиться.
+        bool routerHadTime = (millis() - loadTurnedOnAt >= ROUTER_BOOT_MS);
+
+        if (routerHadTime && millis() - lastReconnect >= WIFI_RECONNECT_MS)
+        {
+            lastReconnect = millis();
+            wifiStatusText = "автопереподключение";
+            Serial.println("WiFi reconnect...");
+            WiFi.reconnect();
+        }
+    }
+}
+
+// ============================================================
+// PROTECTION / POWER LOGIC
+// ============================================================
+
+void protectTick()
+{
+    if (millis() - lastTick < 1000)
+        return;
+
+    lastTick = millis();
+
+    float vb = readVoltage(PIN_VBATT, DIV_VBATT, cfg.calVbatt);
+    float vg = readVoltage(PIN_VGRID, DIV_VGRID, cfg.calVgrid);
+
+    lastVbatt = vb;
+    lastVgrid = vg;
+    battState = getBattState(vb);
+
+    // Гистерезис детекта сети.
+    bool nowGrid = gridPresent ? (vg > cfg.gridOff) : (vg > cfg.gridOn);
+
+    if (nowGrid != gridCandidate)
+    {
+        gridCandidate = nowGrid;
+        gridChangeSince = millis();
+    }
+
+    if (nowGrid != gridPresent && millis() - gridChangeSince > cfg.gridDebounce)
+    {
+        gridPresent = nowGrid;
+
+        if (gridPresent)
+        {
+            // При появлении сети нагрузку можно включать независимо от уровня АКБ,
+            // если пользователь не поставил принудительный OFF.
+            if (loadMode != LM_OFF && !loadOn)
+                setLoad(true);
+            lvdTripped = false;
+
+            sendNtfy("Свет дали. АКБ " + String(vb, 1) + " В");
+            warnSent = false;
+        }
+        else
+        {
+            sendNtfy("Свет отключили! Работа от АКБ, " + String(vb, 1) + " В");
+        }
+    }
+
+    // -------------------- управление нагрузкой --------------------
+    if (loadMode == LM_OFF)
+    {
+        if (loadOn)
+            setLoad(false);
+    }
+    else if (loadMode == LM_ON)
+    {
+        // Даже в ручном ON не даём убить АКБ в ноль.
+        // Если LVD уже сработал, используем battRestore как гистерезис,
+        // чтобы нагрузка не щёлкала туда-сюда на отскоке напряжения.
+        bool batteryAllows = lvdTripped ? (vb >= cfg.battRestore)
+                                        : (vb > cfg.battCutoff);
+        bool want = gridPresent || batteryAllows;
+
+        if (!want && loadOn)
+        {
+            // ВАЖНО: сначала уведомление, пока роутер ещё запитан.
+            sendNtfy("АКБ разряжена (" + String(vb, 1) + " В). Нагрузка отключается.");
+            setLoad(false);
+            lvdTripped = true;
+        }
+        else if (want && !loadOn)
+        {
+            setLoad(true);
+            lvdTripped = false;
+        }
+
+        if (gridPresent)
+            lvdTripped = false;
+    }
+    else // LM_AUTO
+    {
+        if (gridPresent)
+        {
+            // На сети LVD аккумулятора не должен отключать роутер.
+            if (!loadOn)
+                setLoad(true);
+            lvdTripped = false;
+        }
+        else
+        {
+            if (loadOn && vb <= cfg.battCutoff)
+            {
+                // ВАЖНО: ntfy отправляем ДО снятия питания с роутера.
+                sendNtfy("АКБ разряжена (" + String(vb, 1) + " В). Нагрузка отключается.");
+                setLoad(false);
+                lvdTripped = true;
+            }
+            else if (!loadOn)
+            {
+                // Если нагрузку снял именно LVD — ждём battRestore.
+                // Если она была выключена по другой причине (например, ручной OFF -> AUTO),
+                // достаточно быть выше battCutoff.
+                bool canStart = lvdTripped ? (vb >= cfg.battRestore)
+                                           : (vb > cfg.battCutoff);
+                if (canStart)
+                {
+                    setLoad(true);
+                    lvdTripped = false;
+                    // Сообщение с IP уйдёт после того, как роутер загрузится
+                    // и ESP реально переподключится к WiFi.
+                }
+            }
+        }
+
+        if (!gridPresent && loadOn && vb <= cfg.battWarn && !warnSent)
+        {
+            sendNtfy("АКБ садится: " + String(vb, 1) + " В. Скоро отключение.");
+            warnSent = true;
+        }
+
+        if (vb > cfg.battWarn + 0.3f)
+            warnSent = false;
+    }
+
+    Serial.printf("Vbat=%.2f V24=%.2f grid=%d load=%d mode=%d state=%d wifi=%d\n",
+                  vb,
+                  vg,
+                  gridPresent,
+                  loadOn,
+                  (int)loadMode,
+                  (int)battState,
+                  WiFi.status() == WL_CONNECTED);
+}
+
+// ============================================================
+// WEB UI
+// ============================================================
+
+String field(const String &label,
+             const String &name,
+             const String &value,
+             const String &hint = "",
+             const String &type = "text")
+{
+    String h = hint == "" ? "" : "<small>" + htmlEscape(hint) + "</small>";
+    return "<label>" + htmlEscape(label) + h +
+           "<input type='" + htmlEscape(type) +
+           "' name='" + htmlEscape(name) +
+           "' value='" + htmlEscape(value) + "'></label>";
+}
+
+String page()
+{
+    String p = F(
+        "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+        "<title>DC-UPS</title><style>"
+        "body{font-family:sans-serif;max-width:560px;margin:0 auto;padding:16px;background:#f4f4f0;color:#222}"
+        "h2,h3{font-weight:500}label{display:block;margin:10px 0}small{display:block;color:#777;font-size:12px}"
+        "input{width:100%;padding:8px;box-sizing:border-box;border:1px solid #ccc;border-radius:6px}"
+        "fieldset{border:1px solid #ddd;border-radius:8px;margin:14px 0;background:#fff}legend{color:#555}"
+        ".card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;margin:12px 0}"
+        ".row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}.row input{flex:1}"
+        "button{padding:11px 14px;border:0;border-radius:8px;background:#1d6e56;color:#fff;font-size:15px;cursor:pointer}"
+        ".b2{background:#555}.b3{background:#a33}.big{width:100%;padding:12px;margin-top:14px}"
+        "b{font-weight:600}.v{font-size:20px}.muted{font-size:13px;color:#666;word-break:break-all}"
+        "a{color:#1d6e56}"
+        "</style></head><body>");
+
+    p += "<h2>DC-UPS панель</h2>";
+
+    p += "<div class='card'><h3>Состояние</h3>"
+         "<div class='v'>АКБ: <b id='vb'>—</b> В &nbsp; 24В: <b id='v24'>—</b> В</div>"
+         "Сеть: <b id='gr'>—</b> · Нагрузка: <b id='ld'>—</b><br>"
+         "АКБ: <b id='st'>—</b> · Uptime: <b id='up'>—</b> c</div>";
+
+    p += "<div class='card'><h3>WiFi</h3>"
+         "Состояние: <b id='wf'>—</b><br>"
+         "RSSI: <b id='rssi'>—</b> dBm<br>"
+         "<div class='muted'>IP: <a id='iplink' href='#' target='_blank'>—</a></div>"
+         "<div class='row'>"
+         "<button onclick='wretry()'>Попробовать подключиться снова</button>"
+         "</div>"
+         "<div class='muted' id='wmsg'></div>"
+         "</div>";
+
+    p += "<div class='card'><h3>Нагрузка</h3><div class='row'>"
+         "<button onclick=\"ld('on')\">Вкл</button>"
+         "<button class='b2' onclick=\"if(confirm('Выключить роутер/ONT? Текущая веб-сессия может пропасть.'))ld('off')\">Выкл</button>"
+         "<button class='b2' onclick=\"ld('auto')\">Авто</button>"
+         "</div></div>";
+
+    p += "<div class='card'><h3>Калибровка (по мультиметру)</h3>"
+         "<div class='row'><input id='rb' placeholder='реальное АКБ, В'><button onclick='calb()'>АКБ</button></div>"
+         "<div class='row'><input id='r24' placeholder='реальное 24В, В'><button onclick='cal24()'>24В</button></div>"
+         "</div>";
+
+    p += "<div class='card'><h3>Уведомления</h3>"
+         "<button onclick='testn()'>Отправить тест в ntfy</button>"
+         "</div>";
+
+    p += "<form method='POST' action='/save'>";
+    p += "<fieldset><legend>WiFi</legend>" +
+         field("SSID", "ssid", cfg.ssid) +
+         field("Пароль", "pass", "", "пусто — не менять", "password") +
+         "</fieldset>";
+
+    p += "<fieldset><legend>ntfy</legend>" +
+         field("Тема (topic)", "ntfy", cfg.ntfy, "придумай длинную и не угадываемую") +
+         "</fieldset>";
+
+    p += "<fieldset><legend>Калибровка (коэфф.)</legend>" +
+         field("CAL АКБ", "calVbatt", String(cfg.calVbatt, 3)) +
+         field("CAL GRID", "calVgrid", String(cfg.calVgrid, 3)) +
+         "</fieldset>";
+
+    p += "<fieldset><legend>Пороги, В</legend>" +
+         field("Отсечка", "cutoff", String(cfg.battCutoff, 1)) +
+         field("Возврат", "restore", String(cfg.battRestore, 1)) +
+         field("Предупр.", "warn", String(cfg.battWarn, 1)) +
+         field("Сеть есть >", "gridOn", String(cfg.gridOn, 1)) +
+         field("Сети нет <", "gridOff", String(cfg.gridOff, 1)) +
+         field("Антидребезг, с", "deb", String(cfg.gridDebounce / 1000)) +
+         "</fieldset>";
+
+    p += "<button type='submit' class='big'>Сохранить и перезагрузить</button></form>";
+
+    p += F(
+        "<script>"
+        "function upd(){fetch('/status').then(r=>r.json()).then(d=>{"
+        "vb.textContent=d.vb;v24.textContent=d.v24;"
+        "gr.textContent=d.grid?'есть':'нет';"
+        "ld.textContent=(d.load?'вкл':'выкл')+' ('+['авто','ручн.ВКЛ','ручн.ВЫКЛ'][d.mode]+')';"
+        "st.textContent=['норма','садится','критично'][d.state];"
+        "rssi.textContent=d.wifi?d.rssi:'—';up.textContent=d.up;wf.textContent=d.wifi_status;"
+        "if(d.ip){iplink.textContent='http://'+d.ip+'/';iplink.href='http://'+d.ip+'/';}"
+        "else{iplink.textContent='—';iplink.href='#';}"
+        "}).catch(()=>{});}"
+        "function q(u){return fetch(u).then(async r=>({ok:r.ok,text:await r.text()}));}"
+        "function ld(m){q('/load?mode='+m).then(x=>{wmsg.textContent=x.text;setTimeout(upd,300);});}"
+        "function calb(){q('/calbatt?v='+encodeURIComponent(document.getElementById('rb').value)).then(x=>alert(x.text));}"
+        "function cal24(){q('/calgrid?v='+encodeURIComponent(document.getElementById('r24').value)).then(x=>alert(x.text));}"
+        "function testn(){q('/testntfy').then(x=>alert(x.text));}"
+        "function wretry(){wmsg.textContent='Запускаю...';q('/wifi/retry').then(x=>{wmsg.textContent=x.text;setTimeout(upd,500);});}"
+        "setInterval(upd,2000);upd();"
+        "</script></body></html>");
+
+    return p;
+}
+
+void hRoot()
+{
+    server.send(200, "text/html; charset=utf-8", page());
+}
+
+void hStatus()
+{
+    bool connected = WiFi.status() == WL_CONNECTED;
+    int rssi = connected ? WiFi.RSSI() : -127;
+    String ip = connected ? WiFi.localIP().toString() : "";
+
+    String j = "{\"vb\":" + String(lastVbatt, 2) +
+               ",\"v24\":" + String(lastVgrid, 2) +
+               ",\"grid\":" + String(gridPresent ? 1 : 0) +
+               ",\"load\":" + String(loadOn ? 1 : 0) +
+               ",\"mode\":" + String((int)loadMode) +
+               ",\"state\":" + String((int)battState) +
+               ",\"wifi\":" + String(connected ? 1 : 0) +
+               ",\"rssi\":" + String(rssi) +
+               ",\"ip\":\"" + jsonEscape(ip) + "\"" +
+               ",\"wifi_status\":\"" + jsonEscape(wifiStatusText) + "\"" +
+               ",\"portal\":" + String(portalActive ? 1 : 0) +
+               ",\"up\":" + String(millis() / 1000) + "}";
+
+    server.send(200, "application/json", j);
+}
+
+void hLoad()
+{
+    String m = server.arg("mode");
+
+    if (m == "on")
+        loadMode = LM_ON;
+    else if (m == "off")
+        loadMode = LM_OFF;
+    else
+        loadMode = LM_AUTO;
+
+    server.send(200, "text/plain; charset=utf-8", "OK: режим нагрузки -> " + m);
+}
+
+void hCalBatt()
+{
+    float real = server.arg("v").toFloat();
+
+    if (real > 0.5f && lastVbatt > 0.5f)
+    {
+        cfg.calVbatt = cfg.calVbatt * real / lastVbatt;
+        saveConfig();
+        server.send(200, "text/plain; charset=utf-8",
+                    "АКБ откалибрована: CAL=" + String(cfg.calVbatt, 3));
+    }
+    else
+    {
+        server.send(400, "text/plain; charset=utf-8",
+                    "Нужно реальное напряжение > 0,5 В");
+    }
+}
+
+void hCalGrid()
+{
+    float real = server.arg("v").toFloat();
+
+    if (real > 0.5f && lastVgrid > 0.5f)
+    {
+        cfg.calVgrid = cfg.calVgrid * real / lastVgrid;
+        saveConfig();
+        server.send(200, "text/plain; charset=utf-8",
+                    "24В откалибрована: CAL=" + String(cfg.calVgrid, 3));
+    }
+    else
+    {
+        server.send(400, "text/plain; charset=utf-8",
+                    "Нужно реальное напряжение > 0,5 В");
+    }
+}
+
+void hTestNtfy()
+{
+    String msg = "Тест уведомления DC-UPS";
+    if (WiFi.status() == WL_CONNECTED)
+        msg += "\nАдрес панели: " + panelUrl();
+
+    bool ok = sendNtfy(msg);
+    server.send(ok ? 200 : 503,
+                "text/plain; charset=utf-8",
+                ok ? "Отправлено в ntfy"
+                   : "Не ушло (проверь WiFi, интернет и тему ntfy)");
+}
+
+void hWifiRetry()
+{
+    String answer;
+    bool ok = requestPortalWifiRetry(answer);
+
+    server.send(ok ? 202 : 409,
+                "text/plain; charset=utf-8",
+                answer);
+}
+
+void hSave()
+{
+    if (server.hasArg("ssid"))
+        cfg.ssid = server.arg("ssid");
+
+    if (server.hasArg("pass") && server.arg("pass") != "")
+        cfg.pass = server.arg("pass");
+
+    if (server.hasArg("ntfy"))
+        cfg.ntfy = server.arg("ntfy");
+
+    if (server.hasArg("calVbatt"))
+        cfg.calVbatt = server.arg("calVbatt").toFloat();
+
+    if (server.hasArg("calVgrid"))
+        cfg.calVgrid = server.arg("calVgrid").toFloat();
+
+    if (server.hasArg("cutoff"))
+        cfg.battCutoff = server.arg("cutoff").toFloat();
+
+    if (server.hasArg("restore"))
+        cfg.battRestore = server.arg("restore").toFloat();
+
+    if (server.hasArg("warn"))
+        cfg.battWarn = server.arg("warn").toFloat();
+
+    if (server.hasArg("gridOn"))
+        cfg.gridOn = server.arg("gridOn").toFloat();
+
+    if (server.hasArg("gridOff"))
+        cfg.gridOff = server.arg("gridOff").toFloat();
+
+    if (server.hasArg("deb"))
+    {
+        long sec = server.arg("deb").toInt();
+        if (sec < 0) sec = 0;
+        if (sec > 600) sec = 600;
+        cfg.gridDebounce = (uint32_t)sec * 1000UL;
+    }
+
+    saveConfig();
+
+    server.send(200,
+                "text/html; charset=utf-8",
+                "<meta charset='utf-8'><body style='font-family:sans-serif;text-align:center;padding-top:40px'>"
+                "<h3>Сохранено. Перезагрузка…</h3></body>");
+
+    delay(1500);
+    ESP.restart();
+}
+
+void hNotFound()
+{
+    if (portalActive)
+    {
+        server.sendHeader("Location", "http://192.168.4.1/");
+        server.send(302, "text/plain", "");
+    }
+    else
+    {
+        server.send(404, "text/plain; charset=utf-8", "Not found");
+    }
+}
+
+void beginWeb()
+{
+    if (webStarted)
+        return;
+
+    server.on("/", hRoot);
+    server.on("/status", hStatus);
+    server.on("/save", HTTP_POST, hSave);
+    server.on("/load", hLoad);
+    server.on("/calbatt", hCalBatt);
+    server.on("/calgrid", hCalGrid);
+    server.on("/testntfy", hTestNtfy);
+    server.on("/wifi/retry", hWifiRetry);
+    server.onNotFound(hNotFound);
+
+    server.begin();
+    webStarted = true;
+}
+
+// ============================================================
+// SETUP / LOOP
+// ============================================================
+
+void setup()
+{
+    Serial.begin(115200);
+
+    pinMode(PIN_LED_GRID, OUTPUT);
+    pinMode(PIN_LED_BATT, OUTPUT);
+    pinMode(PIN_LOAD, OUTPUT);
+
+    // При старте ключ нагрузки выключен до первичной оценки напряжений.
+    digitalWrite(PIN_LOAD, LOW);
+    loadOn = false;
+
+    // Короткий self-test LED.
+    digitalWrite(PIN_LED_GRID, HIGH);
+    digitalWrite(PIN_LED_BATT, HIGH);
+    delay(400);
+    digitalWrite(PIN_LED_GRID, LOW);
+    digitalWrite(PIN_LED_BATT, LOW);
+
+    analogReadResolution(12);
+    analogSetPinAttenuation(PIN_VBATT, ADC_11db);
+    analogSetPinAttenuation(PIN_VGRID, ADC_11db);
+
+    esp_task_wdt_init(WDT_TIMEOUT, true);
+    esp_task_wdt_add(NULL);
+
+    loadConfig();
+
+    // ВАЖНО: WebServer нельзя запускать до инициализации TCP/IP стека.
+    // WiFi.mode()/WiFi.begin()/WiFi.softAP() ниже сначала поднимут lwIP,
+    // и только после этого вызываем beginWeb().
+
+    lastVbatt = readVoltage(PIN_VBATT, DIV_VBATT, cfg.calVbatt);
+    lastVgrid = readVoltage(PIN_VGRID, DIV_VGRID, cfg.calVgrid);
+
+    battState = getBattState(lastVbatt);
+    gridPresent = lastVgrid > cfg.gridOn;
+    gridCandidate = gridPresent;
+    gridChangeSince = millis();
+
+    Serial.printf("BOOT: Vbat=%.2f V24=%.2f grid=%d\n",
+                  lastVbatt,
+                  lastVgrid,
+                  gridPresent);
+
+    // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ:
+    // ESP управляет питанием роутера, к WiFi которого сама должна подключиться.
+    // Поэтому сначала включаем нагрузку, потом ждём загрузку роутера,
+    // и только затем пытаемся подключиться к WiFi.
+    bool canPowerRouter = gridPresent || (lastVbatt > cfg.battCutoff);
+    if (canPowerRouter)
+        setLoad(true);
+    else
+        setLoad(false);
+
+    if (cfg.ssid == "")
+    {
+        wifiStatusText = "SSID не задан";
+        startPortal();
+    }
+    else if (!loadOn)
+    {
+        wifiStatusText = "роутер отключён: АКБ ниже отсечки";
+        startPortal();
+    }
+    else
+    {
+        Serial.printf("Waiting %lu ms for router/ONT boot...\n", (unsigned long)ROUTER_BOOT_MS);
+        waitWithWatchdog(ROUTER_BOOT_MS);
+
+        if (connectSTABlocking(WIFI_CONNECT_TIMEOUT_MS))
+        {
+            wifiWasConnected = true;
+            handleWifiConnected();
+        }
+        else
+        {
+            wifiWasConnected = false;
+            wifiStatusText = "WiFi не найден; портал активен";
+            Serial.println("WiFi NOT FOUND -> starting portal");
+            startPortal();
+        }
+    }
+
+    // К этому моменту WiFi уже инициализирован:
+    // либо STA через connectSTABlocking(), либо AP+STA через startPortal().
+    // Теперь безопасно открывать TCP-сокет WebServer.
+    beginWeb();
+
+    updateLeds();
+}
+
+void loop()
+{
+    esp_task_wdt_reset();
+
+    protectTick();
+    updateLeds();
+
+    // WebServer работает и через домашний WiFi, и через setup AP.
+    server.handleClient();
+
+    if (portalActive)
+        dns.processNextRequest();
+
+    wifiRetryTick();
+    wifiTick();
+    ntfyTick();
+}
