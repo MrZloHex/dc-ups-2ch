@@ -1,33 +1,304 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1e5b4f">
-  <meta name="description" content="DC-UPS-2CH — руководство, техническая документация, обслуживание и прошивка двухканального DC-ИБП на ESP32.">
-  <title>DC-UPS-2CH — документация</title>
+  <meta name="description" content="DC-UPS-2CH documentation, user manual, service information and firmware resources for an ESP32-based dual-channel DC UPS.">
+  <meta property="og:title" content="DC-UPS-2CH — Documentation">
+  <meta property="og:description" content="Documentation, user manual and service information for the dual-channel ROUTER / ONT backup power supply.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mrzlohex.github.io/dc-ups-2ch/">
+  <meta property="og:image" content="https://raw.githubusercontent.com/MrZloHex/dc-ups-2ch/master/hardware/enclosure/renders/exploded-front.png">
+  <title>DC-UPS-2CH — Documentation</title>
   <style>
-    :root{--bg:#f4f6f4;--card:#fff;--text:#18201d;--muted:#66716c;--line:#dce4e0;--accent:#1e5b4f;--soft:#eaf3ef;--warn:#fff8e7;--warnline:#e8c66a;--r:18px}
-    *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);line-height:1.55}a{color:inherit}.wrap{width:min(980px,calc(100% - 28px));margin:auto}
-    .hero{background:linear-gradient(135deg,#174a40,#1e5b4f 55%,#287363);color:#fff;padding:54px 0 48px;border-radius:0 0 28px 28px}.badge{display:inline-block;padding:6px 11px;border:1px solid #ffffff47;border-radius:999px;background:#ffffff17;font-size:13px;font-weight:700}h1{margin:14px 0 8px;font-size:clamp(34px,7vw,58px);line-height:1}.subtitle{max-width:720px;margin:0;color:#ffffffdc;font-size:clamp(16px,2.7vw,20px)}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}.btn{display:inline-flex;padding:10px 16px;border-radius:12px;text-decoration:none;font-weight:750}.btn.main{background:#fff;color:var(--accent)}.btn.ghost{border:1px solid #ffffff57;background:#ffffff12;color:#fff}
-    main{padding:28px 0 50px}.title{font-size:22px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.card{display:flex;flex-direction:column;min-height:190px;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}.card.featured{border-color:#b9d9cf;background:linear-gradient(#fff,#f5fbf8)}.icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:var(--soft);font-size:21px;margin-bottom:14px}.card h2{margin:0 0 7px;font-size:19px}.card p{margin:0 0 17px;color:var(--muted);font-size:14px}.card .link{margin-top:auto;color:var(--accent);font-weight:750;text-decoration:none}.info{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px}.panel h2{margin:0 0 12px;font-size:18px}.kv{display:grid;grid-template-columns:1fr auto;gap:9px 16px;font-size:14px}.kv span:nth-child(odd){color:var(--muted)}.kv span:nth-child(even){font-weight:700;text-align:right}code{background:#eef2f0;padding:2px 5px;border-radius:6px}.warning{margin-top:14px;padding:16px 18px;background:var(--warn);border:1px solid var(--warnline);border-radius:14px;font-size:14px}footer{padding:25px 0 34px;color:var(--muted);font-size:13px;text-align:center}
-    @media(max-width:700px){.grid,.info{grid-template-columns:1fr}.card{min-height:0}}
+    :root{
+      --bg:#f4f6f4;--card:#fff;--text:#18201d;--muted:#66716c;--line:#dce4e0;
+      --accent:#1e5b4f;--soft:#eaf3ef;--warn:#fff8e7;--warnline:#e8c66a;--r:18px
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
+    a{color:inherit}
+    .wrap{width:min(980px,calc(100% - 28px));margin:auto}
+    .hero{background:radial-gradient(circle at 85% 15%,rgba(255,255,255,.16),transparent 27%),linear-gradient(135deg,#174a40,#1e5b4f 55%,#287363);color:#fff;padding:24px 0 48px;border-radius:0 0 28px 28px}
+    .hero-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:26px}
+    .badge{display:inline-block;padding:6px 11px;border:1px solid #ffffff47;border-radius:999px;background:#ffffff17;font-size:13px;font-weight:700}
+    .lang-switch{display:inline-flex;align-items:center;padding:4px;background:#ffffff14;border:1px solid #ffffff45;border-radius:999px;backdrop-filter:blur(8px)}
+    .lang-btn{border:0;background:transparent;color:#ffffffb8;font:inherit;font-weight:800;font-size:12px;letter-spacing:.06em;padding:7px 11px;border-radius:999px;cursor:pointer}
+    .lang-btn.active{background:#fff;color:var(--accent)}
+    .lang-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+    h1{margin:0 0 8px;font-size:clamp(34px,7vw,58px);line-height:1;letter-spacing:-.04em}
+    .subtitle{max-width:760px;margin:0;color:#ffffffdc;font-size:clamp(16px,2.7vw,20px)}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:12px;text-decoration:none;font-weight:750}
+    .btn.main{background:#fff;color:var(--accent)}
+    .btn.ghost{border:1px solid #ffffff57;background:#ffffff12;color:#fff}
+    main{padding:28px 0 50px}
+    .title{font-size:22px}
+    .renders{display:grid;grid-template-columns:1fr 1fr;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin:0 0 22px}
+    .renders figure{margin:0}
+    .renders img{display:block;width:100%;height:auto;border-radius:12px;background:#fafcfb}
+    .renders figcaption{margin-top:8px;font-size:12.5px;color:var(--muted);text-align:center}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .card{display:flex;flex-direction:column;min-height:190px;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+    .card.featured{border-color:#b9d9cf;background:linear-gradient(#fff,#f5fbf8)}
+    .icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:var(--soft);font-size:21px;margin-bottom:14px}
+    .card h2{margin:0 0 7px;font-size:19px}
+    .card p{margin:0 0 17px;color:var(--muted);font-size:14px}
+    .card .link{margin-top:auto;color:var(--accent);font-weight:750;text-decoration:none}
+    .card .link:hover{text-decoration:underline}
+    .info{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+    .panel h2{margin:0 0 12px;font-size:18px}
+    .kv{display:grid;grid-template-columns:1fr auto;gap:9px 16px;font-size:14px}
+    .kv span:nth-child(odd){color:var(--muted)}
+    .kv span:nth-child(even){font-weight:700;text-align:right}
+    code{background:#eef2f0;padding:2px 5px;border-radius:6px}
+    .warning{margin-top:14px;padding:16px 18px;background:var(--warn);border:1px solid var(--warnline);border-radius:14px;font-size:14px}
+    footer{padding:25px 0 34px;color:var(--muted);font-size:13px;text-align:center}
+    @media(max-width:700px){.grid,.info,.renders{grid-template-columns:1fr}.card{min-height:0}.hero{padding-top:18px}.hero-top{margin-bottom:22px}}
+    @media(prefers-color-scheme:dark){
+      :root{--bg:#111714;--card:#18201d;--text:#edf5f1;--muted:#a8b5af;--line:#2a3933;--soft:#21352e;--warn:#2b2516;--warnline:#7d6936}
+      code{background:#25302c}
+      .card.featured{background:linear-gradient(#18201d,#17251f);border-color:#315a4d}
+      .renders img{background:#0f1613}
+    }
   </style>
 </head>
 <body>
-<header class="hero"><div class="wrap"><span class="badge">DC-UPS-2CH · ESP32 · FW v6</span><h1>DC-UPS-2CH</h1><p class="subtitle">Документация, руководство пользователя и сервисная информация для двухканального резервного источника питания ROUTER / ONT.</p><div class="actions"><a class="btn main" href="DC_UPS_user_manual_v6.pdf">Руководство пользователя</a><a class="btn ghost" href="DC_UPS_documentation_v6.pdf">Полный технический паспорт</a></div></div></header>
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <span class="badge">DC-UPS-2CH · ESP32 · FW v6</span>
+      <div class="lang-switch" aria-label="Language">
+        <button class="lang-btn active" id="lang-en" type="button" onclick="setLanguage('en')">EN</button>
+        <button class="lang-btn" id="lang-ru" type="button" onclick="setLanguage('ru')">RU</button>
+      </div>
+    </div>
+    <h1>DC-UPS-2CH</h1>
+    <p class="subtitle" data-i18n="subtitle"></p>
+    <div class="actions">
+      <a class="btn main" href="DC_UPS_user_manual_v6.pdf" data-i18n="manualButton"></a>
+      <a class="btn ghost" href="DC_UPS_documentation_v6.pdf" data-i18n="passportButton"></a>
+    </div>
+  </div>
+</header>
+
 <main class="wrap">
-<h2 class="title">Документация</h2>
-<section class="grid">
-<article class="card featured"><div class="icon">📘</div><h2>Руководство по эксплуатации</h2><p>Короткая версия для владельца: включение, работа от АКБ, кнопка, Shelf Sleep, Web UI, ntfy и основные неисправности.</p><a class="link" href="DC_UPS_user_manual_v6.pdf">Открыть PDF →</a></article>
-<article class="card"><div class="icon">📄</div><h2>Полный паспорт изделия</h2><p>Техническое описание, режимы работы, безопасность, обслуживание, замена АКБ, испытания и гарантийный талон.</p><a class="link" href="DC_UPS_documentation_v6.pdf">Открыть PDF →</a></article>
-<article class="card"><div class="icon">🔧</div><h2>Аппаратная часть</h2><p>BOM, распиновка ESP32, номиналы, подключение силовых каналов, калибровка и рекомендации по сборке.</p><a class="link" href="HARDWARE.md">Открыть HARDWARE.md →</a></article>
-<article class="card"><div class="icon">🧩</div><h2>Корпус и 3D-модель</h2><p>Файлы корпуса, STEP-экспорт, рендеры и материалы для обслуживания и повторной сборки.</p><a class="link" href="../hardware/enclosure/">Открыть файлы корпуса →</a></article>
-<article class="card"><div class="icon">💾</div><h2>Прошивка и исходный код</h2><p>Исходный код ESP32, PlatformIO-конфигурация, сборка, история изменений и лицензия проекта.</p><a class="link" href="https://github.com/MrZloHex/dc-ups-2ch">Открыть GitHub →</a></article>
-<article class="card"><div class="icon">🏷️</div><h2>Шильдик устройства</h2><p>Макет наклейки 90 × 55 мм с основными номиналами, S/N, датой, подсказкой по кнопке и QR-кодом.</p><a class="link" href="DC_UPS_label_v6.pdf">Открыть PDF →</a></article>
-</section>
-<section class="info"><div class="panel"><h2>Быстрый доступ</h2><div class="kv"><span>Локальная панель</span><span><a href="http://dc-ups.local/">dc-ups.local</a></span><span>Setup Wi-Fi</span><span><code>DC-UPS-Setup</code></span><span>Короткое нажатие</span><span>STATUS</span><span>Двойное нажатие</span><span>SETUP AP</span><span>Удержание 10 с</span><span>STORAGE</span></div></div><div class="panel"><h2>Основные параметры</h2><div class="kv"><span>Вход</span><span>230 V AC / 50 Hz</span><span>АКБ</span><span>12 V · 7 Ah AGM</span><span>Заряд</span><span>13.8 V · max 1.5 A</span><span>Каналы</span><span>ROUTER + ONT</span><span>Контроллер</span><span>ESP32</span></div></div></section>
-<div class="warning"><strong>⚠ Безопасность</strong><br>Внутри корпуса присутствует опасное сетевое напряжение 230 В. Перед вскрытием полностью отключите устройство от сети и отсоедините аккумулятор.</div>
+
+  <section class="renders">
+    <figure>
+      <img src="https://raw.githubusercontent.com/MrZloHex/dc-ups-2ch/master/hardware/enclosure/renders/exploded-front.png"
+           alt="Exploded isometric — front panel, battery, aluminium extrusion shell">
+      <figcaption data-i18n="renderFront"></figcaption>
+    </figure>
+    <figure>
+      <img src="https://raw.githubusercontent.com/MrZloHex/dc-ups-2ch/master/hardware/enclosure/renders/exploded-rear.png"
+           alt="Exploded isometric — rear panel with two-tier PCB stack (XL4016 charger + 2× XL6009 boosters + ESP32)">
+      <figcaption data-i18n="renderRear"></figcaption>
+    </figure>
+  </section>
+
+  <h2 class="title" data-i18n="docsTitle"></h2>
+
+  <section class="grid">
+    <article class="card featured">
+      <div class="icon">📘</div>
+      <h2 data-i18n="manualTitle"></h2>
+      <p data-i18n="manualText"></p>
+      <a class="link" href="DC_UPS_user_manual_v6.pdf" data-i18n="openPdf"></a>
+    </article>
+
+    <article class="card">
+      <div class="icon">📄</div>
+      <h2 data-i18n="passportTitle"></h2>
+      <p data-i18n="passportText"></p>
+      <a class="link" href="DC_UPS_documentation_v6.pdf" data-i18n="openPdf"></a>
+    </article>
+
+    <article class="card">
+      <div class="icon">🔧</div>
+      <h2 data-i18n="hardwareTitle"></h2>
+      <p data-i18n="hardwareText"></p>
+      <a class="link" href="https://github.com/MrZloHex/dc-ups-2ch/blob/master/docs/HARDWARE.md" data-i18n="openHardware"></a>
+    </article>
+
+    <article class="card">
+      <div class="icon">🧩</div>
+      <h2 data-i18n="enclosureTitle"></h2>
+      <p data-i18n="enclosureText"></p>
+      <a class="link" href="https://github.com/MrZloHex/dc-ups-2ch/tree/master/hardware/enclosure" data-i18n="openEnclosure"></a>
+    </article>
+
+    <article class="card">
+      <div class="icon">💾</div>
+      <h2 data-i18n="firmwareTitle"></h2>
+      <p data-i18n="firmwareText"></p>
+      <a class="link" href="https://github.com/MrZloHex/dc-ups-2ch" data-i18n="openGithub"></a>
+    </article>
+
+    <article class="card">
+      <div class="icon">🏷️</div>
+      <h2 data-i18n="labelTitle"></h2>
+      <p data-i18n="labelText"></p>
+      <a class="link" href="DC_UPS_label_v6.pdf" data-i18n="openPdf"></a>
+    </article>
+  </section>
+
+  <section class="info">
+    <div class="panel">
+      <h2 data-i18n="quickTitle"></h2>
+      <div class="kv">
+        <span data-i18n="localPanel"></span><span><a href="http://dc-ups.local/">dc-ups.local</a></span>
+        <span data-i18n="setupWifi"></span><span><code>DC-UPS-Setup</code></span>
+        <span data-i18n="shortPress"></span><span>STATUS</span>
+        <span data-i18n="doublePress"></span><span>SETUP AP</span>
+        <span data-i18n="hold10"></span><span>STORAGE</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 data-i18n="specsTitle"></h2>
+      <div class="kv">
+        <span data-i18n="input"></span><span>230 V AC / 50 Hz</span>
+        <span data-i18n="battery"></span><span>12 V · 7 Ah AGM</span>
+        <span data-i18n="charge"></span><span>13.8 V · max 1.5 A</span>
+        <span data-i18n="channels"></span><span>ROUTER + ONT</span>
+        <span data-i18n="controller"></span><span>ESP32</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="warning">
+    <strong data-i18n="safetyTitle"></strong><br>
+    <span data-i18n="safetyText"></span>
+  </div>
 </main>
-<footer class="wrap">DC-UPS-2CH · MrZloHex · документация проекта<br><a href="../README.ru.md">README</a> · <a href="../CHANGELOG.md">Changelog</a> · <a href="https://github.com/MrZloHex/dc-ups-2ch">GitHub</a></footer>
-</body></html>
+
+<footer class="wrap">
+  <span data-i18n="footer"></span><br>
+  <a href="https://github.com/MrZloHex/dc-ups-2ch/blob/master/README.md">README</a> ·
+  <a href="https://github.com/MrZloHex/dc-ups-2ch/blob/master/CHANGELOG.md">Changelog</a> ·
+  <a href="https://github.com/MrZloHex/dc-ups-2ch">GitHub</a>
+</footer>
+
+<script>
+const translations = {
+  en: {
+    pageTitle: "DC-UPS-2CH — Documentation",
+    description: "DC-UPS-2CH documentation, user manual, service information and firmware resources for an ESP32-based dual-channel DC UPS.",
+    subtitle: "Documentation, user manual and service information for the dual-channel ROUTER / ONT backup power supply.",
+    manualButton: "User manual",
+    passportButton: "Full technical passport",
+    renderFront: "Exploded view: front panel, battery, aluminium extrusion",
+    renderRear:  "Exploded view: rear panel, power PCB stack, ESP32",
+    docsTitle: "Documentation",
+    manualTitle: "User manual",
+    manualText: "Short owner-oriented guide covering startup, battery operation, button controls, Shelf Sleep, Web UI, ntfy and basic troubleshooting.",
+    passportTitle: "Full product passport",
+    passportText: "Technical description, operating modes, safety, maintenance, battery replacement, acceptance tests and warranty information.",
+    hardwareTitle: "Hardware",
+    hardwareText: "BOM, ESP32 pinout, component values, power-channel wiring, calibration and assembly recommendations.",
+    enclosureTitle: "Enclosure & 3D model",
+    enclosureText: "Enclosure files, STEP exports, renders and materials useful for servicing, reproduction and reassembly.",
+    firmwareTitle: "Firmware & source code",
+    firmwareText: "ESP32 source code, PlatformIO configuration, build tooling, changelog and project licensing.",
+    labelTitle: "Device label",
+    labelText: "90 × 55 mm printable device label with main ratings, S/N, date, button hints and a QR code that links here.",
+    openPdf: "Open PDF →",
+    openHardware: "Open HARDWARE.md →",
+    openEnclosure: "Open enclosure files →",
+    openGithub: "Open GitHub →",
+    quickTitle: "Quick access",
+    localPanel: "Local panel",
+    setupWifi: "Setup Wi-Fi",
+    shortPress: "Short press",
+    doublePress: "Double press",
+    hold10: "Hold 10 s",
+    specsTitle: "Main specifications",
+    input: "Input",
+    battery: "Battery",
+    charge: "Charge",
+    channels: "Channels",
+    controller: "Controller",
+    safetyTitle: "⚠ Safety",
+    safetyText: "Dangerous 230 V mains voltage is present inside the enclosure. Before opening the device, disconnect mains power completely and disconnect the battery.",
+    footer: "DC-UPS-2CH · MrZloHex · project documentation"
+  },
+  ru: {
+    pageTitle: "DC-UPS-2CH — Документация",
+    description: "DC-UPS-2CH — документация, руководство, сервисная информация и материалы прошивки двухканального DC-ИБП на ESP32.",
+    subtitle: "Документация, руководство пользователя и сервисная информация для двухканального резервного источника питания ROUTER / ONT.",
+    manualButton: "Руководство пользователя",
+    passportButton: "Полный технический паспорт",
+    renderFront: "Разнесённый вид: лицевая панель, АКБ, корпус",
+    renderRear:  "Разнесённый вид: задняя панель, плата питания, ESP32",
+    docsTitle: "Документация",
+    manualTitle: "Руководство по эксплуатации",
+    manualText: "Короткая версия для владельца: включение, работа от АКБ, кнопка, Shelf Sleep, Web UI, ntfy и основные неисправности.",
+    passportTitle: "Полный паспорт изделия",
+    passportText: "Техническое описание, режимы работы, безопасность, обслуживание, замена АКБ, испытания и гарантийный талон.",
+    hardwareTitle: "Аппаратная часть",
+    hardwareText: "BOM, распиновка ESP32, номиналы, подключение силовых каналов, калибровка и рекомендации по сборке.",
+    enclosureTitle: "Корпус и 3D-модель",
+    enclosureText: "Файлы корпуса, STEP-экспорт, рендеры и материалы для обслуживания, повторной сборки и воспроизведения.",
+    firmwareTitle: "Прошивка и исходный код",
+    firmwareText: "Исходный код ESP32, PlatformIO-конфигурация, сборка, история изменений и лицензия проекта.",
+    labelTitle: "Шильдик устройства",
+    labelText: "Макет наклейки 90 × 55 мм с основными номиналами, S/N, датой, подсказкой по кнопке и QR-кодом, ведущим на эту страницу.",
+    openPdf: "Открыть PDF →",
+    openHardware: "Открыть HARDWARE.md →",
+    openEnclosure: "Открыть файлы корпуса →",
+    openGithub: "Открыть GitHub →",
+    quickTitle: "Быстрый доступ",
+    localPanel: "Локальная панель",
+    setupWifi: "Настройка Wi-Fi",
+    shortPress: "Короткое нажатие",
+    doublePress: "Двойное нажатие",
+    hold10: "Удержание 10 с",
+    specsTitle: "Основные параметры",
+    input: "Вход",
+    battery: "АКБ",
+    charge: "Заряд",
+    channels: "Каналы",
+    controller: "Контроллер",
+    safetyTitle: "⚠ Безопасность",
+    safetyText: "Внутри корпуса присутствует опасное сетевое напряжение 230 В. Перед вскрытием полностью отключите устройство от сети и отсоедините аккумулятор.",
+    footer: "DC-UPS-2CH · MrZloHex · документация проекта"
+  }
+};
+
+function setLanguage(lang) {
+  if (!translations[lang]) lang = "en";
+  const t = translations[lang];
+  document.documentElement.lang = lang;
+  document.title = t.pageTitle;
+
+  const metaDescription = document.querySelector('meta[name="description"]');
+  if (metaDescription) metaDescription.setAttribute("content", t.description);
+
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.dataset.i18n;
+    if (Object.prototype.hasOwnProperty.call(t, key)) el.textContent = t[key];
+  });
+
+  document.getElementById("lang-en").classList.toggle("active", lang === "en");
+  document.getElementById("lang-ru").classList.toggle("active", lang === "ru");
+  document.getElementById("lang-en").setAttribute("aria-pressed", String(lang === "en"));
+  document.getElementById("lang-ru").setAttribute("aria-pressed", String(lang === "ru"));
+
+  try { localStorage.setItem("dc-ups-language", lang); } catch (_) {}
+}
+
+// English is used on a first visit; language choice is then remembered locally.
+let initialLanguage = "en";
+try {
+  const saved = localStorage.getItem("dc-ups-language");
+  if (saved === "ru" || saved === "en") initialLanguage = saved;
+} catch (_) {}
+
+setLanguage(initialLanguage);
+</script>
+</body>
+</html>

@@ -7,6 +7,7 @@
 > read-only status commands back through the same ntfy topic.
 
 **Firmware version:** `2026.09.02-v6` · **License:** [GPL-3.0-or-later](LICENSE)
+· **[Documentation site](https://mrzlohex.github.io/dc-ups-2ch/)**
 · [Full Russian passport & manual (LaTeX)](docs/DC_UPS_documentation_v6.tex)
 
 <p align="center">
@@ -139,6 +140,12 @@ channel.
 
 ## Documentation
 
+- **[Documentation site](https://mrzlohex.github.io/dc-ups-2ch/)** — GitHub
+  Pages landing page linking to every PDF. This URL is also encoded in the QR
+  code printed on the enclosure label — scan the label with any phone to jump
+  straight here.
+- [`docs/index.html`](docs/index.html) — source of the site above (served from
+  the `docs/` folder on the `master` branch)
 - [`docs/HARDWARE.md`](docs/HARDWARE.md) — BOM, GPIO map, ASCII wiring, calibration
 - [`hardware/enclosure/`](hardware/enclosure/) — 3D-printable case (Onshape
   source, STEP exports, CC-BY-SA 4.0) with ready-to-paste
@@ -146,8 +153,10 @@ channel.
   [MakerWorld](hardware/enclosure/MAKERWORLD.md) listing templates
 - [`docs/DC_UPS_documentation_v6.tex`](docs/DC_UPS_documentation_v6.tex) — full
   Russian passport, service manual, warranty template
+- [`docs/DC_UPS_user_manual_v6.tex`](docs/DC_UPS_user_manual_v6.tex) — short
+  A5 user manual (8 pages, Russian) with local-panel + docs-site QR codes
 - [`docs/DC_UPS_label_v6.tex`](docs/DC_UPS_label_v6.tex) — 90 × 55 mm enclosure
-  label with QR to the panel
+  label; QR code encodes the documentation-site URL above
 - [`Makefile`](Makefile) — top-level orchestrator: `make` (firmware + docs),
   `make upload` (flash), `make version` (print stamped identity)
 - [`docs/Makefile`](docs/Makefile) — build the PDFs with `make -C docs all`

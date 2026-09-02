@@ -12,6 +12,12 @@
   \newcommand{\buildcommit}{unknown}%
   \newcommand{\docrev}{unknown}%
 }
+
+% Public documentation site (GitHub Pages). This is what the QR code below
+% encodes — scanning the label with any phone jumps to the online manual /
+% passport / hardware notes. Keep in sync with docs/index.html and the
+% \docsurl macro in DC_UPS_user_manual_v6.tex.
+\newcommand{\docsurl}{https://mrzlohex.github.io/dc-ups-2ch/}
 \begin{document}
 \begin{tikzpicture}[x=1mm,y=1mm]
   \useasboundingbox (0,0) rectangle (90,55);
@@ -40,9 +46,9 @@
     };
 
   \node[anchor=north east,inner sep=0pt] at (86.3,42.8)
-    {\qrcode[height=17mm]{http://dc-ups.local/}};
+    {\qrcode[height=17mm]{\docsurl}};
   \node[anchor=north,align=center,font=\sffamily\fontsize{5.8}{6.2}\selectfont]
-    at (77.8,25.0) {локальная\\панель};
+    at (77.8,25.0) {документация\\онлайн};
 
   \node[anchor=south,draw,line width=0.4pt,rounded corners=0.7mm,align=center,text width=82mm,inner sep=1.0mm,
         font=\sffamily\bfseries\fontsize{5.7}{6.2}\selectfont]

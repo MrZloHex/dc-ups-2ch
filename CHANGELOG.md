@@ -22,8 +22,18 @@ and this project uses date-based firmware versions (`YYYY.MM.DD-vN`).
   license, and copy/paste listing templates for Printables and MakerWorld.
 - `hardware/enclosure/renders/` — exploded isometric line-art views
   (`exploded-front.png`, `exploded-rear.png`) exported from Onshape. Displayed
-  as the hero image in both READMEs and inserted into the LaTeX passport
-  (§ *Сервисные изображения и 3D-модель*).
+  as the hero image in the README, inserted into the LaTeX passport
+  (§ *Сервисные изображения и 3D-модель*), and shown on the docs site.
+- **Documentation site** at
+  [`https://mrzlohex.github.io/dc-ups-2ch/`](https://mrzlohex.github.io/dc-ups-2ch/)
+  served from `docs/` on the `master` branch (GitHub Pages, `.nojekyll`).
+  Landing page: [`docs/index.html`](docs/index.html) — bilingual (EN / RU) with
+  an EN⇆RU switch, saves the choice in `localStorage`, defaults to English on
+  first visit, respects `prefers-color-scheme` for dark mode.
+- `docs/DC_UPS_user_manual_v6.tex` — short A5 Russian user manual (8 pages),
+  templatized against `build_info.tex` and with two QR codes on the last page
+  (local `dc-ups.local` panel + docs site).
+- `docs/Makefile`: new `manual` target for the user manual.
 - Serial boot log and web-panel header now show version + git hash + build date.
 
 ### Changed
@@ -34,6 +44,10 @@ and this project uses date-based firmware versions (`YYYY.MM.DD-vN`).
 - **mDNS reliability:** `WiFi.setSleep(false)` (multicast survives modem
   sleep), `WiFi.setHostname()` before `WiFi.begin()` (DHCP hostname advertised),
   and `MDNS.end()` + `MDNS.begin()` on every reconnect (responder rebuilt).
+- **Enclosure label QR** now encodes the documentation-site URL instead of
+  `http://dc-ups.local/`. Scan the sticker from a phone anywhere and land on
+  the public manual; the local panel URL is still printed as plain text on the
+  label and reachable directly.
 - **Comments:** every in-source comment (`.h`/`.cpp`/`.py`) translated to
   English and cut down to *why*-style notes; narration removed. User-visible
   strings (web UI, ntfy messages, event log) stay in Russian.
@@ -41,8 +55,8 @@ and this project uses date-based firmware versions (`YYYY.MM.DD-vN`).
   `include/` (`ups_common`, `config_store`, `event_log`, `hardware`, `power`,
   `wifi_mgr`, `ntfy`, `sleep_modes`, `recovery`, `web_ui`). No behavioural
   changes.
-- Added English + Russian `README`s and `docs/HARDWARE.md` (BOM, GPIO map,
-  ASCII wiring, calibration procedure).
+- Added English `README` and `docs/HARDWARE.md` (BOM, GPIO map, ASCII wiring,
+  calibration procedure).
 - `.gitignore` expanded to cover every LaTeX intermediate (`.xdv`, glossary /
   index bits, beamer bits, minted) plus the generated `docs/build_info.tex`.
 

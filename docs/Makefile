@@ -53,21 +53,23 @@ LATEXMKOPTS := -xelatex -interaction=nonstopmode -halt-on-error -file-line-error
 # List every top-level .tex here. Anything that gets \include'd is picked
 # up automatically by latexmk.
 SOURCES := DC_UPS_documentation_v6.tex \
+           DC_UPS_user_manual_v6.tex \
            DC_UPS_label_v6.tex
 
 TARGETS := $(SOURCES:.tex=.pdf)
 
 BUILD_INFO := build_info.tex
 
-.PHONY: all doc label watch clean distclean help version build_info
+.PHONY: all doc manual label watch clean distclean help version build_info
 .DEFAULT_GOAL := all
 
 # ------------------------- Targets -------------------------
 
 all: $(TARGETS)
 
-doc:   DC_UPS_documentation_v6.pdf
-label: DC_UPS_label_v6.pdf
+doc:    DC_UPS_documentation_v6.pdf
+manual: DC_UPS_user_manual_v6.pdf
+label:  DC_UPS_label_v6.pdf
 
 # Every PDF depends on the freshly regenerated build_info.
 # .PHONY makes build_info always run, so the PDFs pick up new git hashes / dates
@@ -113,7 +115,7 @@ distclean: clean
 	rm -f $(TARGETS)
 
 help:
-	@echo "Targets: all doc label watch clean distclean version build_info"
+	@echo "Targets: all doc manual label watch clean distclean version build_info"
 	@echo "Sources: $(SOURCES)"
 	@echo "Outputs: $(TARGETS)"
 	@echo ""
