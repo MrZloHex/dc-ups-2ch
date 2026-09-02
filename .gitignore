@@ -1,1 +1,55 @@
+# PlatformIO
 .pio/
+.pioenvs/
+.piolibdeps/
+.clang_complete
+.gcc-flags.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# LaTeX build artefacts (intermediate files only; final *.pdf are committed).
+# Run `make -C docs clean` to remove these locally.
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+*.synctex(busy)
+*.fls
+*.fdb_latexmk
+*.bcf
+*.run.xml
+*.blg
+*.bbl
+*.xdv
+*.nav
+*.snm
+*.vrb
+*.pyg
+*.tdo
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+*.idx
+*.ind
+*.ilg
+*-eps-converted-to.pdf
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local secrets / configs
+credentials.h
+secrets.h

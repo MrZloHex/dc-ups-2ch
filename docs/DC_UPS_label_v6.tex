@@ -1,0 +1,44 @@
+\documentclass[tikz,border=0pt]{standalone}
+\usepackage{fontspec}
+\setsansfont{DejaVu Sans}
+\usepackage[russian]{babel}
+\usepackage{xcolor}
+\usepackage{qrcode}
+\definecolor{accent}{HTML}{1E5B4F}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \useasboundingbox (0,0) rectangle (90,55);
+  \fill[white] (0,0) rectangle (90,55);
+  \draw[line width=0.55pt,rounded corners=1.5mm] (1.2,1.2) rectangle (88.8,53.8);
+  \fill[accent,rounded corners=1.4mm] (1.2,45.2) rectangle (88.8,53.8);
+  \fill[accent] (1.2,45.2) rectangle (88.8,49.0); % square lower edge of header
+
+  \node[anchor=west,text=white,font=\sffamily\bfseries\fontsize{14}{14}\selectfont]
+    at (3.3,49.4) {DC-UPS-2CH};
+  \node[anchor=east,text=white,font=\sffamily\fontsize{6.8}{7}\selectfont]
+    at (86.7,49.4) {v1.0 / FW v6};
+
+  \node[anchor=north west,align=left,text width=60mm,font=\sffamily\fontsize{6.35}{7.15}\selectfont]
+    at (3.3,43.2) {%
+      \textbf{Источник резервного питания сетевого оборудования}\\[0.6mm]
+      IN: 230 V AC, 50 Hz\\
+      BAT: 12 V, 7 Ah AGM/SLA\\
+      CHARGE: 13.8 V, max 1.5 A\\
+      OUT 1 ROUTER: \rule{8mm}{0.3pt} V / \rule{6mm}{0.3pt} A\\
+      OUT 2 ONT: \rule{8mm}{0.3pt} V / \rule{6mm}{0.3pt} A\\
+      WEB: \texttt{dc-ups.local}\\
+      S/N: \rule{23mm}{0.3pt}\quad DATE: \rule{13mm}{0.3pt}\\[0.55mm]
+      \textbf{BTN:} 1x STATUS; 2x SETUP; HOLD 10s STORAGE.\\[-0.1mm]
+      \textbf{STORAGE:} wake only by button.
+    };
+
+  \node[anchor=north east,inner sep=0pt] at (86.3,42.8)
+    {\qrcode[height=17mm]{http://dc-ups.local/}};
+  \node[anchor=north,align=center,font=\sffamily\fontsize{5.8}{6.2}\selectfont]
+    at (77.8,25.0) {локальная\\панель};
+
+  \node[anchor=south,draw,line width=0.4pt,rounded corners=0.7mm,align=center,text width=82mm,inner sep=1.0mm,
+        font=\sffamily\bfseries\fontsize{5.7}{6.2}\selectfont]
+    at (45,2.6) {ВНИМАНИЕ: ВНУТРИ 230 V. ПЕРЕД ВСКРЫТИЕМ ОТКЛЮЧИТЬ СЕТЬ И АККУМУЛЯТОР.};
+\end{tikzpicture}
+\end{document}
