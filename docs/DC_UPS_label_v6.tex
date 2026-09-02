@@ -1,57 +1,138 @@
 \documentclass[tikz,border=0pt]{standalone}
 \usepackage{fontspec}
 \setsansfont{DejaVu Sans}
-\usepackage[russian]{babel}
+\setmonofont{DejaVu Sans Mono}
 \usepackage{xcolor}
 \usepackage{qrcode}
-\definecolor{accent}{HTML}{1E5B4F}
+\usetikzlibrary{matrix}
+
+% -----------------------------------------------------------------------------
+% DC-UPS-2CH identification label (RU)
+% Physical size: 90 x 55 mm
+% Recommended print scale: 100 % / Actual size
+% -----------------------------------------------------------------------------
+
+\definecolor{accent}{HTML}{153F37}
+\definecolor{text}{HTML}{171C1A}
+\definecolor{muted}{HTML}{66716D}
+\definecolor{line}{HTML}{AAB5B1}
+\definecolor{soft}{HTML}{EEF2F0}
+
+\newcommand{\docurl}{https://mrzlohex.github.io/dc-ups-2ch/}
+
 \IfFileExists{build_info.tex}{\input{build_info}}{%
   \newcommand{\hwversion}{v1.0}%
-  \newcommand{\fwversion}{dev}%
-  \newcommand{\builddate}{unknown}%
-  \newcommand{\buildcommit}{unknown}%
-  \newcommand{\docrev}{unknown}%
+  \newcommand{\fwversion}{v6}%
+  \newcommand{\builddate}{}%
+  \newcommand{\buildcommit}{}%
+  \newcommand{\docrev}{}%
 }
 
-% Public documentation site (GitHub Pages). This is what the QR code below
-% encodes — scanning the label with any phone jumps to the online manual /
-% passport / hardware notes. Keep in sync with docs/index.html and the
-% \docsurl macro in DC_UPS_user_manual_v6.tex.
-\newcommand{\docsurl}{https://mrzlohex.github.io/dc-ups-2ch/}
 \begin{document}
 \begin{tikzpicture}[x=1mm,y=1mm]
   \useasboundingbox (0,0) rectangle (90,55);
+
+  % Background and frame
   \fill[white] (0,0) rectangle (90,55);
-  \draw[line width=0.55pt,rounded corners=1.5mm] (1.2,1.2) rectangle (88.8,53.8);
-  \fill[accent,rounded corners=1.4mm] (1.2,45.2) rectangle (88.8,53.8);
-  \fill[accent] (1.2,45.2) rectangle (88.8,49.0); % square lower edge of header
+  \draw[line width=0.45pt,color=text] (1.1,1.1) rectangle (88.9,53.9);
 
-  \node[anchor=west,text=white,font=\sffamily\bfseries\fontsize{14}{14}\selectfont]
-    at (3.3,49.4) {DC-UPS-2CH};
-  \node[anchor=east,text=white,font=\sffamily\fontsize{6.8}{7}\selectfont]
-    at (86.7,49.4) {\hwversion\ /\ FW\ \fwversion};
+  % Header
+  \fill[accent] (1.1,45.4) rectangle (88.9,53.9);
+  \node[anchor=west,text=white,
+        font=\sffamily\bfseries\fontsize{13.7}{14}\selectfont,
+        text height=2.35ex,text depth=.25ex]
+    at (3.4,49.65) {DC-UPS-2CH};
+  \node[anchor=east,text=white,
+        font=\ttfamily\fontsize{6.5}{7}\selectfont,
+        text height=1.7ex,text depth=.3ex]
+    at (86.6,49.65) {HW \hwversion\quad FW \fwversion};
 
-  \node[anchor=north west,align=left,text width=60mm,font=\sffamily\fontsize{6.35}{7.15}\selectfont]
-    at (3.3,43.2) {%
-      \textbf{Источник резервного питания сетевого оборудования}\\[0.6mm]
-      IN: 230 V AC, 50 Hz\\
-      BAT: 12 V, 7 Ah AGM/SLA\\
-      CHARGE: 13.8 V, max 1.5 A\\
-      OUT 1 ROUTER: \rule{8mm}{0.3pt} V / \rule{6mm}{0.3pt} A\\
-      OUT 2 ONT: \rule{8mm}{0.3pt} V / \rule{6mm}{0.3pt} A\\
-      WEB: \texttt{dc-ups.local}\\
-      S/N: \rule{23mm}{0.3pt}\quad DATE: \rule{13mm}{0.3pt}\\[0.55mm]
-      \textbf{BTN:} 1x STATUS; 2x SETUP; HOLD 10s STORAGE.\\[-0.1mm]
-      \textbf{STORAGE:} wake only by button.
-    };
+  % Classification
+  \node[anchor=north west,text=text,
+        font=\sffamily\bfseries\fontsize{5.85}{6.35}\selectfont,
+        text height=1.7ex,text depth=.25ex]
+    at (3.4,43.55) {ДВУХКАНАЛЬНЫЙ DC-ИБП / РОУТЕР + ONT};
 
-  \node[anchor=north east,inner sep=0pt] at (86.3,42.8)
-    {\qrcode[height=17mm]{\docsurl}};
-  \node[anchor=north,align=center,font=\sffamily\fontsize{5.8}{6.2}\selectfont]
-    at (77.8,25.0) {документация\\онлайн};
+  % Electrical data
+  \matrix (specs) [
+    matrix of nodes,
+    anchor=north west,
+    nodes={
+      anchor=base west,
+      inner sep=0pt,
+      outer sep=0pt,
+      text height=1.55ex,
+      text depth=.35ex
+    },
+    row sep=0.15mm,
+    column sep=4.0mm
+  ] at (3.4,40.75) {
+    |[text=muted,font=\sffamily\bfseries\fontsize{5.55}{6.15}\selectfont]| ВХОД
+      & |[text=text,font=\ttfamily\fontsize{5.9}{6.25}\selectfont]| 230 V AC / 50 Hz \\
+    |[text=muted,font=\sffamily\bfseries\fontsize{5.55}{6.15}\selectfont]| АКБ
+      & |[text=text,font=\ttfamily\fontsize{5.9}{6.25}\selectfont]| 12 V / 7 Ah AGM/SLA \\
+    |[text=muted,font=\sffamily\bfseries\fontsize{5.55}{6.15}\selectfont]| ЗАРЯД
+      & |[text=text,font=\ttfamily\fontsize{5.9}{6.25}\selectfont]| 13.8 V / 1.5 A max \\
+    |[text=muted,font=\sffamily\bfseries\fontsize{5.55}{6.15}\selectfont]| ВЫХОД 1
+      & |[text=text,font=\ttfamily\fontsize{5.72}{6.2}\selectfont]| РОУТЕР\quad \rule{7.0mm}{0.32pt}\,V\quad \rule{5.4mm}{0.32pt}\,A \\
+    |[text=muted,font=\sffamily\bfseries\fontsize{5.55}{6.15}\selectfont]| ВЫХОД 2
+      & |[text=text,font=\ttfamily\fontsize{5.72}{6.2}\selectfont]| ONT\phantom{TER}\quad \rule{7.0mm}{0.32pt}\,V\quad \rule{5.4mm}{0.32pt}\,A \\
+    |[text=muted,font=\sffamily\bfseries\fontsize{5.55}{6.15}\selectfont]| ЛОКАЛ. UI
+      & |[text=text,font=\ttfamily\fontsize{5.72}{6.2}\selectfont]| dc-ups.local \\
+  };
 
-  \node[anchor=south,draw,line width=0.4pt,rounded corners=0.7mm,align=center,text width=82mm,inner sep=1.0mm,
-        font=\sffamily\bfseries\fontsize{5.7}{6.2}\selectfont]
-    at (45,2.6) {ВНИМАНИЕ: ВНУТРИ 230 V. ПЕРЕД ВСКРЫТИЕМ ОТКЛЮЧИТЬ СЕТЬ И АККУМУЛЯТОР.};
+  % QR / documentation block
+  \draw[line width=0.28pt,color=line] (64.2,20.7) -- (64.2,43.55);
+
+  \node[anchor=north,inner sep=0pt] at (76.3,42.9)
+    {\qrcode[height=17.2mm]{\docurl}};
+  \node[anchor=north,align=center,text=text,
+        font=\sffamily\bfseries\fontsize{5.4}{5.85}\selectfont,
+        text height=1.55ex,text depth=.25ex]
+    at (76.3,25.05) {ДОКУМЕНТАЦИЯ};
+  \node[anchor=north,align=center,text=muted,
+        font=\sffamily\fontsize{4.55}{4.95}\selectfont,
+        text height=1.5ex,text depth=.25ex]
+    at (76.3,22.95) {РУКОВОДСТВО / СЕРВИС};
+
+  % Identification separator and fields
+  \draw[line width=0.25pt,color=line] (3.4,19.15) -- (86.6,19.15);
+
+  \node[anchor=base west,text=muted,
+        font=\sffamily\bfseries\fontsize{5.4}{5.9}\selectfont,
+        text height=1.55ex,text depth=.3ex]
+    at (3.4,16.95) {S/N};
+  \draw[line width=0.32pt,color=text] (9.0,16.75) -- (34.0,16.75);
+
+  \node[anchor=base west,text=muted,
+        font=\sffamily\bfseries\fontsize{5.4}{5.9}\selectfont,
+        text height=1.55ex,text depth=.3ex]
+    at (39.2,16.95) {ДАТА};
+  \draw[line width=0.32pt,color=text] (48.0,16.75) -- (64.2,16.75);
+
+  % Button reference strip
+  \fill[soft] (3.4,10.8) rectangle (86.6,15.9);
+  \draw[line width=0.25pt,color=line] (3.4,10.8) rectangle (86.6,15.9);
+
+  \node[anchor=base west,text=accent,
+        font=\sffamily\bfseries\fontsize{5.45}{6}\selectfont,
+        text height=1.55ex,text depth=.3ex]
+    at (5.0,12.95) {КНОПКА};
+  \node[anchor=base west,text=text,
+        font=\ttfamily\fontsize{4.85}{5.4}\selectfont,
+        text height=1.55ex,text depth=.3ex]
+    at (19.8,12.95) {1x СТАТУС / 2x SETUP / УДЕРЖ. 10 с ХРАНЕНИЕ};
+
+  % Safety strip
+  \draw[line width=0.4pt,color=text] (3.4,3.25) rectangle (86.6,8.75);
+  \node[anchor=base west,text=text,
+        font=\sffamily\bfseries\fontsize{5.15}{5.7}\selectfont,
+        text height=1.55ex,text depth=.3ex]
+    at (5.0,5.60) {ОПАСНО};
+  \node[anchor=base west,text=text,
+        font=\sffamily\fontsize{4.7}{5.25}\selectfont,
+        text height=1.55ex,text depth=.3ex]
+    at (17.9,5.60) {ВНУТРИ 230 В. ПЕРЕД ВСКРЫТИЕМ ОТКЛЮЧИТЬ СЕТЬ И АКБ.};
+
 \end{tikzpicture}
 \end{document}
