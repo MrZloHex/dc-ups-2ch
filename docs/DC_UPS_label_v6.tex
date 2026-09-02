@@ -5,6 +5,13 @@
 \usepackage{xcolor}
 \usepackage{qrcode}
 \definecolor{accent}{HTML}{1E5B4F}
+\IfFileExists{build_info.tex}{\input{build_info}}{%
+  \newcommand{\hwversion}{v1.0}%
+  \newcommand{\fwversion}{dev}%
+  \newcommand{\builddate}{unknown}%
+  \newcommand{\buildcommit}{unknown}%
+  \newcommand{\docrev}{unknown}%
+}
 \begin{document}
 \begin{tikzpicture}[x=1mm,y=1mm]
   \useasboundingbox (0,0) rectangle (90,55);
@@ -16,7 +23,7 @@
   \node[anchor=west,text=white,font=\sffamily\bfseries\fontsize{14}{14}\selectfont]
     at (3.3,49.4) {DC-UPS-2CH};
   \node[anchor=east,text=white,font=\sffamily\fontsize{6.8}{7}\selectfont]
-    at (86.7,49.4) {v1.0 / FW v6};
+    at (86.7,49.4) {\hwversion\ /\ FW\ \fwversion};
 
   \node[anchor=north west,align=left,text width=60mm,font=\sffamily\fontsize{6.35}{7.15}\selectfont]
     at (3.3,43.2) {%

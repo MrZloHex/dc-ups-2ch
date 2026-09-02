@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "recovery.h"
 
 #include "ups_common.h"
@@ -34,8 +34,8 @@ bool checkInternetReachable()
     if (WiFi.status() != WL_CONNECTED)
         return false;
 
-    // Две независимые точки. Ничего не отправляем наружу: только TCP connect.
-    // Это меньше зависит от ntfy и не спамит HTTP-запросами.
+    // Two independent endpoints. Only a TCP connect — no HTTP traffic. Less
+    // dependent on ntfy and doesn't spam anyone.
     if (tcpProbe(IPAddress(1, 1, 1, 1), 443))
         return true;
 
@@ -95,14 +95,14 @@ void networkRecoveryTick()
         return;
     }
 
-    // Не тратим последние проценты АКБ на циклические перезапуски.
+    // Don't burn the last of the battery on recovery loops.
     if (!gridPresent && lastVbatt <= cfg.battWarn)
     {
         recoveryStatus = "пауза: низкий АКБ";
         return;
     }
 
-    // После подачи питания роутеру/ONT ничего не диагностируем, пока они грузятся.
+    // Don't diagnose anything while the router / ONT are booting.
     if (millis() - equipmentTurnedOnAt() < ROUTER_BOOT_MS + 10000UL)
     {
         recoveryStatus = "ждём загрузку оборудования";
@@ -159,7 +159,7 @@ void networkRecoveryTick()
     }
     else
     {
-        // Между probe-запросами используем последнее состояние.
+        // Between probe intervals, keep the last-known state.
         if (internetKnown && !internetReachable)
         {
             badNow    = true;
@@ -191,8 +191,8 @@ void networkRecoveryTick()
 
     if (rtcAutoPowerCycles < AUTO_MAX_POWER_CYCLES)
     {
-        // 1-й шаг: если пропал сам WiFi — перезапускаем ROUTER;
-        // если WiFi жив, но WAN нет — сначала ONT. 2-й шаг — оба канала.
+        // Step 1: if WiFi itself dropped, power-cycle ROUTER; if WiFi is up
+        // but WAN is dead, power-cycle ONT. Step 2: both.
         PowerTarget target;
         if (rtcAutoPowerCycles == 0)
             target = (WiFi.status() == WL_CONNECTED) ? TARGET_ONT : TARGET_ROUTER;

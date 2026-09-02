@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// DC-UPS-2CH — веб-интерфейс: страница, JSON /status и все /… обработчики.
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Web UI: HTML page, /status JSON, all /… handlers.
 #pragma once
 
 #include <Arduino.h>

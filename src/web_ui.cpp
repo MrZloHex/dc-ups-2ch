@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "web_ui.h"
 
 #include "ups_common.h"
@@ -17,7 +17,7 @@ DNSServer dns;
 bool      webStarted = false;
 
 // ============================================================
-// Хелперы для формы
+// Form helpers
 // ============================================================
 static String field(const String &label,
                     const String &name,
@@ -57,7 +57,7 @@ static bool requireAuth()
 }
 
 // ============================================================
-// Страница
+// Page
 // ============================================================
 static String page()
 {
@@ -78,7 +78,8 @@ static String page()
         "a{color:#1d6e56}"
         "</style></head><body>");
 
-    p += "<h2>DC-UPS панель</h2><div class='muted'>FW " FW_VERSION "</div>";
+    p += "<h2>DC-UPS панель</h2><div class='muted'>FW " FW_VERSION
+         " · " FW_GIT_HASH " · " FW_BUILD_DATE "</div>";
 
     p += "<div class='card'><h3>Состояние</h3>"
          "<div class='v'>АКБ: <b id='vb'>—</b> В &nbsp; 24В: <b id='v24'>—</b> В</div>"
@@ -306,7 +307,7 @@ static void hChannel()
         return;
     }
 
-    // Фактическое переключение произойдёт в protectTick(), чтобы соблюдался LVD.
+    // The actual switch happens in protectTick() so LVD still applies.
     server.send(200, "text/plain; charset=utf-8", "OK: " + ch + " -> " + m);
 }
 
@@ -508,7 +509,7 @@ static void hSave()
         cfg.portalIdleSec = (uint32_t)v;
     }
 
-    // Порог сна всегда держим ниже LVD.
+    // Keep the sleep threshold below LVD, always.
     if (cfg.battSleep > cfg.battCutoff - 0.1f) cfg.battSleep = cfg.battCutoff - 0.1f;
     if (cfg.battSleep < 9.0f)                  cfg.battSleep = 9.0f;
 

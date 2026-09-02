@@ -1,10 +1,10 @@
-// SPDX-License-Identifier: MIT
-// DC-UPS-2CH — аварийный deep sleep (по таймеру) и Shelf Sleep (только кнопка).
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Emergency deep sleep (timer wake) + Shelf Sleep (button-only wake).
 #pragma once
 
 #include <Arduino.h>
 
-// RTC memory сохраняется через deep sleep и software reset.
+// RTC memory survives deep sleep and software reset.
 extern RTC_DATA_ATTR bool     rtcEmergencySleep;
 extern RTC_DATA_ATTR bool     rtcShelfSleep;
 extern RTC_DATA_ATTR uint32_t rtcSleepWakeCount;

@@ -1,15 +1,15 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 //
-// DC-UPS-2CH — источник резервного питания сетевого оборудования на ESP32.
-//   • два независимых DC-выхода (ROUTER, ONT) через P-MOSFET,
-//   • контроль АКБ / 24 В через ADC1 (делители 100k/10k -> x11),
-//   • веб-панель, mDNS, ntfy (исходящие уведомления + read-only команды),
-//   • аварийный deep sleep по таймеру + Shelf Sleep только по кнопке,
-//   • автоматическое восстановление связи (probe -> power-cycle -> reboot).
+// DC-UPS-2CH — ESP32 backup power controller for network gear.
+//   - two independent DC outputs (ROUTER, ONT) via high-side P-MOSFETs;
+//   - battery / 24 V sensing on ADC1 (100k/10k dividers, x11);
+//   - web panel, mDNS, ntfy (outgoing + read-only inbound commands);
+//   - emergency deep sleep (timer wake) + Shelf Sleep (button-only wake);
+//   - staged auto-recovery: probe -> power-cycle -> optional ESP reboot.
 //
-// Внешних библиотек не требуется: только Arduino-framework для ESP32.
-// Схема, распиновка и BOM: см. docs/HARDWARE.md.
-// Полный русский паспорт: docs/DC_UPS_documentation_v6.tex.
+// No external Arduino libraries: everything ships in the ESP32 core.
+// Wiring, GPIO map, BOM: docs/HARDWARE.md.
+// Full Russian passport: docs/DC_UPS_documentation_v6.tex.
 
 #include <Arduino.h>
 #include "esp_task_wdt.h"
@@ -39,7 +39,8 @@ void setup()
 
     loadConfig();
 
-    // Первичный замер до старта WiFi: он же определяет, нужен ли сразу аварийный сон.
+    // First measurement before WiFi — also decides whether to go straight
+    // back into emergency sleep on a low battery.
     lastVbatt = readVoltage(PIN_VBATT, DIV_VBATT, cfg.calVbatt);
     lastVgrid = readVoltage(PIN_VGRID, DIV_VGRID, cfg.calVgrid);
 
@@ -57,9 +58,8 @@ void setup()
     {
         rtcSleepWakeCount++;
 
-        // В аварийном режиме не поднимаем WiFi каждые 30 секунд.
-        // Только быстро меряем АКБ/24В. Полный запуск — когда вернулась сеть
-        // или аккумулятор действительно восстановился.
+        // In emergency mode we do NOT bring WiFi up every 30 s — just measure
+        // and sleep again. Full boot only when grid is back or battery recovered.
         if (!gridPresent && lastVbatt < cfg.battRestore)
         {
             Serial.printf("Emergency wake #%lu: Vbat=%.2f V24=%.2f -> sleep again\n",
@@ -77,8 +77,8 @@ void setup()
     }
     else if (cfg.deepSleepEnabled && !gridPresent && lastVbatt <= cfg.battSleep)
     {
-        // Если устройство включили уже с глубоко разряженным АКБ —
-        // не поднимаем радио и не добиваем батарею.
+        // Cold-booted with a deeply-discharged battery — don't bring the
+        // radio up, don't finish killing the battery.
         rtcEmergencySleep = true;
         rtcShelfSleep     = false;
         rtcSleepWakeCount = 0;
@@ -86,7 +86,7 @@ void setup()
         emergencySleepTimerOnly();
     }
 
-    logEvent("BOOT FW " FW_VERSION +
+    logEvent("BOOT FW " FW_FULL_ID +
              String(" | АКБ ") + String(lastVbatt, 2) +
              " В | 24В "        + String(lastVgrid, 2) +
              " В | сеть "       + (gridPresent ? "есть" : "нет"));
@@ -97,9 +97,8 @@ void setup()
         outageCount     = 1;
     }
 
-    // КЛЮЧЕВОЕ: ESP управляет питанием роутера, к WiFi которого сама должна
-    // подключиться. Поэтому сначала включаем нагрузку, ждём загрузку роутера,
-    // и только затем пытаемся подключиться к WiFi.
+    // KEY POINT: the ESP controls power to the router whose WiFi it must join.
+    // Turn the loads on first, wait for the router to boot, then try WiFi.
     bool canPowerRouter = gridPresent || (lastVbatt > cfg.battCutoff);
     if (canPowerRouter)
     {
@@ -109,8 +108,8 @@ void setup()
     else
     {
         setBothLoads(false);
-        // Если ESP загрузилась уже ниже LVD (но чуть выше резервного sleepV),
-        // считаем LVD сработавшим: через sleepDelaySec она тоже уйдёт в сон.
+        // Booted below LVD but above the fallback sleep threshold — treat LVD
+        // as tripped so the emergency-sleep timer starts.
         if (!gridPresent && lastVbatt <= cfg.battCutoff)
         {
             lvdTripped    = true;
@@ -148,9 +147,8 @@ void setup()
         }
     }
 
-    // К этому моменту WiFi уже инициализирован:
-    // либо STA через connectSTABlocking(), либо AP+STA через startPortal().
-    // Теперь безопасно открывать TCP-сокет WebServer.
+    // WiFi is now initialised (STA via connectSTABlocking, or AP+STA via
+    // startPortal). Safe to open the TCP socket for the WebServer.
     beginWeb();
 
     updateLeds();
@@ -167,7 +165,7 @@ void loop()
     rebootTick();
     updateLeds();
 
-    // WebServer работает и через домашний WiFi, и через setup AP.
+    // The WebServer runs on both home WiFi and the setup AP.
     server.handleClient();
 
     if (portalActive)

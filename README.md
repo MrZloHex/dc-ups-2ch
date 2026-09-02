@@ -6,7 +6,7 @@
 > local web panel, sends notifications through `ntfy.sh`, and even answers
 > read-only status commands back through the same ntfy topic.
 
-**Firmware version:** `2026.09.02-v6` · **License:** [MIT](LICENSE)
+**Firmware version:** `2026.09.02-v6` · **License:** [GPL-3.0-or-later](LICENSE)
 · [Русская версия README](README.ru.md)
 · [Full Russian passport & manual (LaTeX)](docs/DC_UPS_documentation_v6.tex)
 
@@ -93,10 +93,30 @@ state through `include/ups_common.h`:
 ```bash
 git clone https://github.com/YOUR_USER/dc-ups-2ch.git
 cd dc-ups-2ch
-pio run                # build
-pio run -t upload      # flash
-pio device monitor     # 115200 baud
+
+# Everything at once (firmware + PDFs), stamped with version + git hash + date:
+make                   # or: make all
+make upload            # firmware + flash
+make monitor           # 115200 baud
+
+# Or use PlatformIO directly — the pre-script still stamps the build:
+pio run
+pio run -t upload
+pio device monitor
 ```
+
+The version stamped into the firmware and both PDFs comes from the top-level
+`VERSION` file plus `git rev-parse --short HEAD` and today's UTC date. It
+shows up in the serial boot log, in the web panel header, in ntfy status
+replies, and on the printable device label. Override any of them:
+
+```bash
+make VERSION=2026.10.01-v7            # bump semantic version for a release build
+make DOCREV="Rev. 3"                  # override the document revision label
+```
+
+`make version` prints exactly what will be stamped, `make help` lists every
+target.
 
 ### First boot
 
@@ -150,9 +170,14 @@ Russian manual for full teardown / battery replacement procedure.
   Russian passport, service manual, warranty template
 - [`docs/DC_UPS_label_v6.tex`](docs/DC_UPS_label_v6.tex) — 90 × 55 mm enclosure
   label with QR to the panel
+- [`Makefile`](Makefile) — top-level orchestrator: `make` (firmware + docs),
+  `make upload` (flash), `make version` (print stamped identity)
 - [`docs/Makefile`](docs/Makefile) — build the PDFs with `make -C docs all`
   (needs `xelatex` + `latexmk` and the DejaVu fonts); `make -C docs clean`
   wipes every intermediate
+- [`scripts/inject_version.py`](scripts/inject_version.py) — PlatformIO
+  pre-script that stamps `FW_VERSION` / `FW_GIT_HASH` / `FW_BUILD_DATE`
+  into the firmware; runs automatically on every `pio run`
 - [`CHANGELOG.md`](CHANGELOG.md) — release notes
 
 ## Contributing
@@ -167,6 +192,14 @@ Issues and PRs welcome. Please:
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Hardware wiring is documented for personal /
-educational use; recycled AC/DC bricks and Chinese DC/DC modules used in the
-BOM come with their own certifications (or don't).
+**Firmware & documentation:** GNU General Public License v3.0 or later —
+see [LICENSE](LICENSE). If you build a product on top of this firmware,
+you must make your source available under the same license.
+
+**Enclosure / 3D model:** Creative Commons Attribution-ShareAlike 4.0
+International (CC-BY-SA 4.0) — see
+[`hardware/enclosure/LICENSE-CC-BY-SA-4.0.txt`](hardware/enclosure/LICENSE-CC-BY-SA-4.0.txt).
+
+Hardware wiring is documented for personal / educational use; recycled
+AC/DC bricks and Chinese DC/DC modules used in the BOM come with their
+own certifications (or don't).

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "ntfy.h"
 
 #include "ups_common.h"
@@ -81,8 +81,8 @@ String buildStatusMessage(const String &headline)
     return msg;
 }
 
-// Минимальный JSON string parser для полей ответа ntfy.
-// Нужен только для коротких полей id/event/message, внешние библиотеки не требуются.
+// Minimal JSON string-field parser for ntfy responses. Only the short
+// id/event/message fields are needed — no external library required.
 static bool jsonStringField(const String &json, const String &key, String &out)
 {
     String marker = "\"" + key + "\":";
@@ -122,8 +122,8 @@ static void handleNtfyCommand(const String &id, String command)
     bool isPing   = (command == "!ups ping");
     if (!isStatus && !isPing) return;
 
-    // Сохраняем ID именно команды, а не каждого обычного уведомления.
-    // Так после reboot одна и та же команда не выполнится повторно.
+    // Persist the command ID (not every notification's ID) so the same
+    // command isn't re-executed after a reboot.
     saveNtfyCommandId(id);
     logEvent("ntfy command: " + command);
 
@@ -204,10 +204,10 @@ void ntfyCommandTick()
         if (!jsonStringField(line, "id",    id))    continue;
         if (!jsonStringField(line, "event", event)) continue;
 
-        // Если сервер вернул cursor-сообщение включительно, не исполняем его повторно.
+        // Server may include the cursor message itself; don't re-execute it.
         if (id == ntfyLastSeenId) continue;
 
-        // Всегда двигаем RAM-cursor вперёд, включая собственные ответы устройства.
+        // Always advance the RAM cursor, including the device's own replies.
         ntfyLastSeenId = id;
         if (event != "message") continue;
         if (!jsonStringField(line, "message", message)) continue;

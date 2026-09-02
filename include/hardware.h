@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: MIT
-// DC-UPS-2CH — LED, кнопка, инициализация железа и обработка пробуждения.
+// SPDX-License-Identifier: GPL-3.0-or-later
+// LEDs, button state machine, wake-cause dispatch.
 #pragma once
 
 #include <Arduino.h>
 #include "esp_sleep.h"
 
-// Флаг: кнопка ещё удерживается после EXT0-wake, не считать это новым нажатием.
+// True while the wake button is still held after an EXT0 wake — must ignore
+// it until released so it isn't counted as a new press.
 extern bool buttonIgnoreUntilRelease;
 
 void initHardware();

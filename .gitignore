@@ -14,6 +14,8 @@
 
 # LaTeX build artefacts (intermediate files only; final *.pdf are committed).
 # Run `make -C docs clean` to remove these locally.
+docs/build_info.tex
+
 *.aux
 *.log
 *.out

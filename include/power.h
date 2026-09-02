@@ -1,11 +1,10 @@
-// SPDX-License-Identifier: MIT
-// DC-UPS-2CH — управление нагрузками, LVD, protectTick и power-cycle.
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Load control, LVD, protection tick, power-cycle scheduler.
 #pragma once
 
 #include <Arduino.h>
 #include "ups_common.h"
 
-// Наблюдаемое состояние силовой части
 extern bool          routerOn, ontOn;
 extern bool          gridPresent, gridCandidate;
 extern bool          warnSent;
@@ -19,17 +18,14 @@ extern unsigned long outageStartedAt;
 extern unsigned long lastOutageDurationMs;
 extern uint32_t      outageCount;
 
-// Планировщик перезапусков
 extern PowerCycleState powerCycleState;
 extern PowerTarget     powerCycleTarget;
 extern unsigned long   powerCycleAt;
 extern bool            powerCycleAutomatic;
 extern String          powerCycleReason;
 
-// Планировщик перезагрузки самой ESP
 extern unsigned long rebootAt;
 
-// --- Управление ---
 void setRouter(bool on);
 void setOnt(bool on);
 void setBothLoads(bool on);
@@ -42,15 +38,13 @@ unsigned long equipmentTurnedOnAt();
 
 BattState getBattState(float vb);
 
-// --- Пользовательские действия ---
 bool requestRouterRestart(String &answer);
 bool requestOntRestart(String &answer);
 bool requestBothRestart(String &answer);
 bool requestTargetRestart(PowerTarget target, String &answer,
                           bool automatic = false,
-                          const String &reason = "ручной перезапуск");
+                          const String &reason = "manual restart");
 
-// --- Тики главного цикла ---
 void protectTick();
 void powerCycleTick();
 void rebootTick();

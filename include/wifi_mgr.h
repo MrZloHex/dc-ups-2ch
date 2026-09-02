@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// DC-UPS-2CH — WiFi STA/AP, captive portal, mDNS, восстановление подключения.
+// SPDX-License-Identifier: GPL-3.0-or-later
+// WiFi STA/AP, captive portal, mDNS, reconnect logic.
 #pragma once
 
 #include <Arduino.h>
@@ -20,7 +20,7 @@ extern unsigned long manualPortalUntil;
 extern unsigned long wifiRetryStarted;
 extern unsigned long wifiRetryWaitUntil;
 extern unsigned long lastReconnect;
-extern Mode          mode;
+extern Mode           mode;
 extern WifiRetryState wifiRetryState;
 
 void touchWebActivity();
@@ -30,10 +30,10 @@ void stopPortal();
 bool connectSTABlocking(uint32_t timeoutMs);
 void handleWifiConnected();
 
-// Ручной перезапуск подключения из веб-панели (без reboot ESP).
+// Manual WiFi retry from the web panel (no ESP reboot).
 bool requestPortalWifiRetry(String &answer);
 
-// Setup AP на 15 минут по двойному нажатию кнопки.
+// Setup AP for 15 minutes triggered by button double-tap.
 void startManualPortalFromButton();
 
 void wifiTick();

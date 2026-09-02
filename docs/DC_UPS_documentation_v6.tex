@@ -23,7 +23,17 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning}
 
-\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue,pdfauthor={Изготовитель DC-UPS-2CH},pdftitle={Паспорт и руководство по эксплуатации DC-UPS-2CH}}
+% Build identity is normally injected by `make -C docs build_info`.
+% Fallbacks below let the .tex compile standalone in a TeX editor without make.
+\IfFileExists{build_info.tex}{\input{build_info}}{%
+  \newcommand{\hwversion}{v1.0}%
+  \newcommand{\fwversion}{dev}%
+  \newcommand{\builddate}{unknown}%
+  \newcommand{\buildcommit}{unknown}%
+  \newcommand{\docrev}{unknown}%
+}
+
+\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue,pdfauthor={Изготовитель DC-UPS-2CH},pdftitle={Паспорт и руководство по эксплуатации DC-UPS-2CH \fwversion}}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.45em}
 \renewcommand{\arraystretch}{1.2}
@@ -72,9 +82,9 @@
 
 \vfill
 \begin{tabular}{@{}p{55mm}p{90mm}@{}}
-Модель изделия: & DC-UPS-2CH v1.0 \\
-Версия прошивки: & 2026.09.02-v6 \\
-Редакция документа: & 2026.09.02 / Rev. 2 \\
+Модель изделия: & DC-UPS-2CH \hwversion \\
+Версия прошивки: & \fwversion \\
+Редакция документа: & \builddate\ / \docrev \\
 Серийный номер: & \rule{70mm}{0.4pt} \\
 Дата изготовления: & \rule{70mm}{0.4pt} \\
 Изготовитель / сборщик: & \rule{70mm}{0.4pt} \\
@@ -83,7 +93,7 @@
 
 \vfill
 {\small Документ предназначен для владельца изделия и для выполнения регламентного обслуживания.\\
-Хранить вместе с устройством. Актуализировано для прошивки 2026.09.02-v6.}
+Хранить вместе с устройством. Актуализировано для прошивки \fwversion\ (сборка \buildcommit, \builddate).}
 \end{titlepage}
 
 \tableofcontents
@@ -142,7 +152,7 @@ DC-UPS-2CH представляет собой двухканальный ист
 Количество выходов & 2 независимых канала \\
 Выходные DC/DC-модули & 2\,$\times$\,XL6009 buck-boost или установленный эквивалент \\
 Управляющий контроллер & ESP32 \\
-Версия прошивки на момент выпуска документа & 2026.09.02-v6 \\
+Версия прошивки на момент выпуска документа & \fwversion \\
 Контроль АКБ & ADC, GPIO35, делитель 100~кОм / 10~кОм \\
 Контроль 24~В & ADC, GPIO34, делитель 100~кОм / 10~кОм \\
 Канал ROUTER & GPIO32 $\rightarrow$ NPN 2N2222 $\rightarrow$ P-MOSFET \\
@@ -468,7 +478,7 @@ Wi-Fi есть, интернета нет & Сбой ONT/провайдера/WA
 
 % -------------------- 12 --------------------
 \section{Свидетельство о приёмке}
-Изделие DC-UPS-2CH v1.0, серийный номер \rule{50mm}{0.4pt}, собрано, проверено и признано годным к эксплуатации при соблюдении настоящего руководства.
+Изделие DC-UPS-2CH \hwversion, серийный номер \rule{50mm}{0.4pt}, собрано, проверено и признано годным к эксплуатации при соблюдении настоящего руководства.
 
 \vspace{5mm}
 \begin{tabular}{@{}p{55mm}p{90mm}@{}}
@@ -484,7 +494,7 @@ Wi-Fi есть, интернета нет & Сбой ONT/провайдера/WA
 
 \begin{tcolorbox}[colback=white,colframe=accent,boxrule=1pt,arc=2mm]
 \begin{tabular}{@{}p{55mm}p{90mm}@{}}
-Изделие: & DC-UPS-2CH v1.0 \\
+Изделие: & DC-UPS-2CH \hwversion \\
 Серийный номер: & \rule{65mm}{0.4pt} \\
 Дата передачи: & \rule{65mm}{0.4pt} \\
 Изготовитель / сборщик: & \rule{65mm}{0.4pt} \\

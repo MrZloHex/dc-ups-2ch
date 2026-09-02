@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// DC-UPS-2CH — исходящие уведомления и приём read-only команд (!ups status/ping).
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Outgoing ntfy notifications and read-only inbound commands (!ups status/ping).
 #pragma once
 
 #include <Arduino.h>

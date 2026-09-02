@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// DC-UPS-2CH — общие определения (единственное место хранения глобалов и утилит).
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Shared globals and utility functions.
 #include "ups_common.h"
 
 #include <WiFi.h>

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "sleep_modes.h"
 
 #include "ups_common.h"
@@ -19,8 +19,7 @@ RTC_DATA_ATTR uint32_t rtcSleepWakeCount = 0;
 
 unsigned long sleepLowSince = 0;
 
-// Используется на timer-wakeup ДО инициализации WiFi/lwIP.
-// Никаких WiFi.* здесь вызывать нельзя.
+// Called on timer wake BEFORE WiFi/lwIP init. Must not touch WiFi.*
 [[noreturn]] void emergencySleepTimerOnly()
 {
     digitalWrite(PIN_LOAD_ROUTER, LOW);
@@ -45,9 +44,8 @@ unsigned long sleepLowSince = 0;
 
 [[noreturn]] void enterEmergencySleep(const String &reason)
 {
-    // К этому моменту основная нагрузка уже должна быть снята LVD.
-    // Если WiFi ещё каким-то образом доступен — пробуем отправить последнее сообщение,
-    // но не задерживаем сон надолго.
+    // Loads should already be off (LVD). If WiFi still works, try one last
+    // notification, but do not delay sleep for long.
     logEvent("Аварийный deep sleep: " + reason);
 
     if (WiFi.status() == WL_CONNECTED && cfg.ntfy != "")
@@ -97,7 +95,7 @@ unsigned long sleepLowSince = 0;
     if (WiFi.status() == WL_CONNECTED && cfg.ntfy != "")
         sendNtfy("DC-UPS переведён в режим хранения.\nROUTER/ONT: OFF\nПробуждение: нажать кнопку на устройстве.");
 
-    // Подтверждение: три коротких мигания красным.
+    // Feedback: three short red blinks.
     for (uint8_t i = 0; i < 3; ++i)
     {
         digitalWrite(PIN_LED_BATT, HIGH);
@@ -123,8 +121,8 @@ unsigned long sleepLowSince = 0;
     WiFi.mode(WIFI_OFF);
     delay(100);
 
-    // Нельзя входить в EXT0 sleep, пока кнопка всё ещё удерживается LOW:
-    // иначе контроллер мгновенно проснётся. Ждём отпускания.
+    // Don't enter EXT0 sleep while the button is still LOW — the chip would
+    // immediately wake back up. Wait for release.
     while (digitalRead(PIN_BUTTON) == LOW)
     {
         esp_task_wdt_reset();
@@ -136,8 +134,8 @@ unsigned long sleepLowSince = 0;
     rtcShelfSleep     = true;
     rtcSleepWakeCount = 0;
 
-    // GPIO14 — RTC GPIO у классического ESP32. В режиме хранения таймер НЕ включаем:
-    // единственный источник пробуждения — кнопка, замыкающая GPIO14 на GND.
+    // GPIO14 is an RTC-GPIO on the classic ESP32. In shelf mode the timer is
+    // NOT enabled — the only wake source is the button (GPIO14 -> GND).
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
     rtc_gpio_init         ((gpio_num_t)PIN_BUTTON);
     rtc_gpio_set_direction((gpio_num_t)PIN_BUTTON, RTC_GPIO_MODE_INPUT_ONLY);
@@ -166,9 +164,9 @@ void deepSleepTick()
         return;
     }
 
-    // Основной сценарий: LVD уже отключил оба выхода по battCutoff.
-    // После снятия нагрузки напряжение АКБ отскакивает вверх, поэтому НЕ ждём,
-    // пока оно снова упадёт до battSleep. battSleep остаётся аварийным резервным порогом.
+    // Main path: LVD already dropped both outputs at battCutoff. Once
+    // unloaded, the battery voltage bounces back up, so we DON'T wait for it
+    // to fall to battSleep — battSleep is only the fallback threshold.
     bool afterLvd         = lvdTripped;
     bool emergencyVoltage = lastVbatt <= cfg.battSleep;
 

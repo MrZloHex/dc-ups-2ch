@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// DC-UPS-2CH — работа с NVS Preferences: загрузка/сохранение настроек и счётчиков.
+// SPDX-License-Identifier: GPL-3.0-or-later
+// NVS Preferences load/save for settings and recovery counters.
 #pragma once
 
 #include <Arduino.h>

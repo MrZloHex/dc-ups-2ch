@@ -6,7 +6,7 @@
 > Контроллер ESP32 отвечает за защиту, веб-панель, уведомления через
 > `ntfy.sh` и приём read-only команд статуса обратно через тот же topic.
 
-**Версия прошивки:** `2026.09.02-v6` · **Лицензия:** [MIT](LICENSE)
+**Версия прошивки:** `2026.09.02-v6` · **Лицензия:** [GPL-3.0-or-later](LICENSE)
 · [English README](README.md)
 · [Полный паспорт и руководство (LaTeX)](docs/DC_UPS_documentation_v6.tex)
 
@@ -93,10 +93,30 @@
 ```bash
 git clone https://github.com/YOUR_USER/dc-ups-2ch.git
 cd dc-ups-2ch
-pio run                # собрать
-pio run -t upload      # прошить
-pio device monitor     # 115200
+
+# Всё сразу (прошивка + PDF), с версией + git hash + датой в каждом артефакте:
+make                   # то же, что make all
+make upload            # прошивка + flash
+make monitor           # 115200
+
+# Или через PlatformIO — pre-скрипт всё равно проставит идентификаторы:
+pio run
+pio run -t upload
+pio device monitor
 ```
+
+Версия, которая попадает в прошивку и в оба PDF, берётся из файла
+`VERSION` в корне репозитория плюс `git rev-parse --short HEAD` и
+сегодняшняя UTC-дата. Её видно в serial boot log, в шапке веб-панели, в
+ответах статуса ntfy и на наклейке корпуса. Можно переопределить:
+
+```bash
+make VERSION=2026.10.01-v7            # поднять версию для релизной сборки
+make DOCREV="Rev. 3"                  # переопределить ревизию документа
+```
+
+`make version` показывает, что именно будет проставлено, `make help` —
+все таргеты.
 
 ### Первый запуск
 
@@ -149,9 +169,14 @@ pio device monitor     # 115200
   полный паспорт, руководство по эксплуатации, гарантийный талон
 - [`docs/DC_UPS_label_v6.tex`](docs/DC_UPS_label_v6.tex) — шильдик 90 × 55 мм
   с QR на панель
+- [`Makefile`](Makefile) — мастер-Makefile: `make` (прошивка + docs),
+  `make upload` (flash), `make version` (посмотреть, что будет проставлено)
 - [`docs/Makefile`](docs/Makefile) — сборка PDF командой `make -C docs all`
   (требуется `xelatex` + `latexmk` и шрифты DejaVu); `make -C docs clean`
   убирает все промежуточные файлы
+- [`scripts/inject_version.py`](scripts/inject_version.py) — PlatformIO
+  pre-скрипт: проставляет `FW_VERSION` / `FW_GIT_HASH` / `FW_BUILD_DATE`
+  в прошивку; отрабатывает автоматически при каждом `pio run`
 - [`CHANGELOG.md`](CHANGELOG.md) — история изменений
 
 ## Развитие
@@ -165,6 +190,14 @@ Issues и PR приветствуются. Условия:
 
 ## Лицензия
 
-MIT — см. [LICENSE](LICENSE). Разводка приведена для личного/учебного
-использования. Использованные в BOM бытовые AC/DC-блоки и Chinese DC/DC
-имеют собственные сертификаты (или не имеют).
+**Прошивка и документация:** GNU General Public License v3.0 или новее —
+см. [LICENSE](LICENSE). Если вы делаете свой продукт на базе этой
+прошивки, вы обязаны публиковать исходный код на тех же условиях.
+
+**Корпус / 3D-модель:** Creative Commons Attribution-ShareAlike 4.0
+International (CC-BY-SA 4.0) — см.
+[`hardware/enclosure/LICENSE-CC-BY-SA-4.0.txt`](hardware/enclosure/LICENSE-CC-BY-SA-4.0.txt).
+
+Разводка приведена для личного/учебного использования. Использованные в
+BOM бытовые AC/DC-блоки и Chinese DC/DC имеют собственные сертификаты
+(или не имеют).

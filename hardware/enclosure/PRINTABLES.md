@@ -39,7 +39,7 @@
 ## License
 
 Model: **CC-BY-SA 4.0** — https://creativecommons.org/licenses/by-sa/4.0/
-Firmware (separate): MIT — https://github.com/<< YOUR_USER >>/dc-ups-2ch/blob/main/LICENSE
+Firmware (separate): **GPL-3.0-or-later** — https://github.com/<< YOUR_USER >>/dc-ups-2ch/blob/main/LICENSE
 
 ## Model source
 
@@ -134,7 +134,9 @@ amps into a short — that's why the fuse is non-negotiable.
 
 - The model (this listing) is **CC-BY-SA 4.0**. Remix freely, credit
   back, and re-share under the same terms.
-- The firmware in the linked GitHub repo is **MIT** — no strings attached.
+- The firmware in the linked GitHub repo is **GPL-3.0-or-later** — if
+  you distribute a device that runs modified firmware, you need to
+  publish your source under the same license.
 
 ### Feedback
 

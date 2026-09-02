@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "config_store.h"
 #include "ups_common.h"
 #include "ntfy.h"
@@ -35,14 +35,14 @@ void loadConfig()
     cfg.netBadSec            = prefs.getUInt("netBadSec",  180);
     cfg.portalIdleSec        = prefs.getUInt("portalIdle", 900);
 
-    // Эти два счётчика пишутся крайне редко и переживают software reset.
+    // Rarely-updated counters; survive software reset via NVS.
     rtcAutoPowerCycles = prefs.getUChar("recCycles",  rtcAutoPowerCycles);
     rtcNetReboots      = prefs.getUChar("recReboots", rtcNetReboots);
 
     ntfyLastCommandId = prefs.getString("ntfyCmdId", "");
     ntfyLastSeenId    = ntfyLastCommandId;
 
-    // Защита от случайно сохранённых абсурдных значений.
+    // Clamp any accidentally-saved absurd values.
     if (cfg.battSleep > cfg.battCutoff - 0.1f) cfg.battSleep = cfg.battCutoff - 0.1f;
     if (cfg.battSleep < 9.0f)                  cfg.battSleep = 9.0f;
     if (cfg.sleepCheckSec < 10)                cfg.sleepCheckSec = 10;

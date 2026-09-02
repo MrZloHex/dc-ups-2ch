@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "power.h"
 
 #include "ups_common.h"
@@ -31,10 +31,9 @@ String          powerCycleReason;
 
 unsigned long rebootAt = 0;
 
-// Локальный планировщик замеров.
 static unsigned long s_lastTick = 0;
 
-// ---------- Управление нагрузками ----------
+// ---------- Load control ----------
 
 bool anyLoadOn()      { return routerOn || ontOn; }
 bool networkLoadsOn() { return routerOn && ontOn; }
@@ -93,7 +92,8 @@ unsigned long equipmentTurnedOnAt()
 
 bool canPowerLoadNow()
 {
-    // После LVD не разрешаем ручным restart'ом обойти гистерезис на отскоке АКБ.
+    // After LVD, require the restore threshold — don't let a manual restart
+    // bypass the hysteresis on the battery's post-load-shed voltage bounce.
     bool batteryAllows = lvdTripped ? (lastVbatt >= cfg.battRestore)
                                     : (lastVbatt >  cfg.battCutoff);
     return gridPresent || batteryAllows;
@@ -159,7 +159,7 @@ bool requestRouterRestart(String &a) { return requestTargetRestart(TARGET_ROUTER
 bool requestOntRestart   (String &a) { return requestTargetRestart(TARGET_ONT,    a, false, "ручной перезапуск ONT"); }
 bool requestBothRestart  (String &a) { return requestTargetRestart(TARGET_BOTH,   a, false, "ручной перезапуск обоих каналов"); }
 
-// ---------- Тики ----------
+// ---------- Tick handlers ----------
 
 void powerCycleTick()
 {
@@ -207,7 +207,7 @@ void powerCycleTick()
             lastReconnect  = millis();
         }
 
-        // Заставляем модуль восстановления заново измерить связь.
+        // Force the recovery module to re-measure connectivity.
         networkBadSince      = millis();
         lastInternetCheck    = 0;
         internetHealthySince = 0;
@@ -227,7 +227,7 @@ void rebootTick()
     }
 }
 
-// ---------- Основная защита: замер, гистерезис, LVD ----------
+// ---------- Protection tick: measure, hysteresis, LVD ----------
 
 static void applyChannelMode(bool isRouter, float vb)
 {
@@ -265,7 +265,7 @@ void protectTick()
     lastVgrid = vg;
     battState = getBattState(vb);
 
-    // Гистерезис сети.
+    // Grid presence hysteresis.
     bool nowGrid = gridPresent ? (vg > cfg.gridOff) : (vg > cfg.gridOn);
     if (nowGrid != gridCandidate)
     {
@@ -314,8 +314,8 @@ void protectTick()
         }
     }
 
-    // LVD общий для обоих выходов. Сначала уведомляем, пока ROUTER ещё жив,
-    // затем снимаем питание обоих DC-DC модулей.
+    // Shared LVD: send the notification first (while ROUTER still runs),
+    // then drop both channels.
     if (!gridPresent && !lvdTripped && vb <= cfg.battCutoff && anyLoadOn() &&
         powerCycleState == PC_IDLE)
     {
@@ -327,8 +327,8 @@ void protectTick()
         sleepLowSince = millis();
     }
 
-    // При ручных OFF/ON/AUTO обслуживаем каналы независимо, но во время
-    // power-cycle не вмешиваемся в состояние целевого канала.
+    // Apply manual OFF/ON/AUTO per-channel, but don't touch a channel that's
+    // currently in a power-cycle.
     if (powerCycleState == PC_IDLE)
     {
         if (gridPresent)
@@ -344,7 +344,7 @@ void protectTick()
         }
         else if (vb >= cfg.battRestore)
         {
-            // Гистерезис восстановления после LVD.
+            // LVD recovery hysteresis.
             lvdTripped    = false;
             sleepLowSince = 0;
             applyChannelMode(true,  vb);

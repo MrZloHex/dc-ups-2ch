@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// DC-UPS-2CH — автоматическое восстановление связи (probe + power-cycle).
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Internet health probing + staged auto-recovery (power-cycle → ESP reboot).
 #pragma once
 
 #include <Arduino.h>

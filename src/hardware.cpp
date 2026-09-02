@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "hardware.h"
 
 #include "ups_common.h"
@@ -13,7 +13,7 @@
 
 bool buttonIgnoreUntilRelease = false;
 
-// Локальное состояние конечного автомата кнопки.
+// Button state machine — internal only.
 static bool          s_raw            = HIGH;
 static bool          s_stable         = HIGH;
 static bool          s_longHandled    = false;
@@ -24,8 +24,7 @@ static unsigned long s_firstClickAt   = 0;
 
 void initHardware()
 {
-    // После EXT0 deep sleep RTC-пин остаётся в RTC-режиме;
-    // возвращаем GPIO14 обычному GPIO driver.
+    // After EXT0 wake the pin is still in RTC mode — return it to plain GPIO.
     rtc_gpio_deinit((gpio_num_t)PIN_BUTTON);
 
     pinMode(PIN_LED_GRID,    OUTPUT);
@@ -34,7 +33,7 @@ void initHardware()
     pinMode(PIN_LOAD_ONT,    OUTPUT);
     pinMode(PIN_BUTTON,      INPUT_PULLUP);
 
-    // При старте оба силовых ключа гарантированно выключены.
+    // Both power switches must be guaranteed off at boot.
     digitalWrite(PIN_LOAD_ROUTER, LOW);
     digitalWrite(PIN_LOAD_ONT,    LOW);
     routerOn = false;
@@ -43,7 +42,7 @@ void initHardware()
     s_raw    = digitalRead(PIN_BUTTON);
     s_stable = s_raw;
 
-    // Короткий self-test LED.
+    // LED self-test.
     digitalWrite(PIN_LED_GRID, HIGH);
     digitalWrite(PIN_LED_BATT, HIGH);
     delay(400);
@@ -91,7 +90,7 @@ static void handleButtonShort()
     logEvent("Кнопка: короткое -> запрос статуса ntfy");
     bool ok = sendNtfy(buildStatusMessage("Статус DC-UPS по кнопке"));
 
-    // 2 зелёных = отправлено; 3 красных = WiFi/ntfy недоступны.
+    // Feedback: 2 green blinks = sent, 3 red blinks = WiFi/ntfy down.
     uint8_t count = ok ? 2 : 3;
     int     pin   = ok ? PIN_LED_GRID : PIN_LED_BATT;
     for (uint8_t i = 0; i < count; ++i)
@@ -115,8 +114,7 @@ void buttonTick()
     bool          raw = digitalRead(PIN_BUTTON);
     unsigned long now = millis();
 
-    // После EXT0 wake кнопка ещё может физически удерживаться.
-    // Не считаем это новым нажатием.
+    // Ignore the button while it's still held from an EXT0 wake.
     if (buttonIgnoreUntilRelease)
     {
         if (raw == HIGH)

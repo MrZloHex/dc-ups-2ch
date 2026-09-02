@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "wifi_mgr.h"
 
 #include "ups_common.h"
@@ -60,8 +60,7 @@ void startPortal()
 {
     if (!portalActive)
     {
-        // AP+STA: портал остаётся доступен, пока ESP параллельно пробует
-        // подключиться к домашней сети.
+        // AP+STA: keep the portal reachable while STA tries the home WiFi.
         WiFi.mode(WIFI_AP_STA);
 
         bool apOk;
@@ -100,21 +99,28 @@ void handleWifiConnected()
     wifiStatusText = "подключено: " + ip;
     mode           = MODE_RUN;
 
+    // Auto-reconnect can re-enable modem sleep, which drops multicast (mDNS).
+    // Force it off on every (re)connect.
+    WiFi.setSleep(false);
+
     logEvent("WiFi подключён: " + cfg.ssid + ", IP " + ip);
     Serial.println("[ntfy] topic: " + (cfg.ntfy == "" ? String("NOT SET") : cfg.ntfy));
 
-    if (!mdnsStarted)
+    // Restart mDNS on every connect — the responder gets flaky after a WiFi drop.
+    if (mdnsStarted)
     {
-        if (MDNS.begin(MDNS_HOST))
-        {
-            MDNS.addService("http", "tcp", 80);
-            mdnsStarted = true;
-            logEvent("mDNS запущен: " + mdnsUrl());
-        }
-        else
-        {
-            logEvent("mDNS: не удалось запустить");
-        }
+        MDNS.end();
+        mdnsStarted = false;
+    }
+    if (MDNS.begin(MDNS_HOST))
+    {
+        MDNS.addService("http", "tcp", 80);
+        mdnsStarted = true;
+        logEvent("mDNS запущен: " + mdnsUrl());
+    }
+    else
+    {
+        logEvent("mDNS: begin() не сработал");
     }
 
     String reason;
@@ -143,7 +149,11 @@ bool connectSTABlocking(uint32_t timeoutMs)
         return false;
 
     WiFi.mode(WIFI_STA);
+    // Hostname must be set before begin() so DHCP announces it to the router.
+    WiFi.setHostname(MDNS_HOST);
     WiFi.setAutoReconnect(true);
+    // Modem sleep drops incoming multicast (mDNS). Off = reliable mDNS.
+    WiFi.setSleep(false);
     WiFi.begin(cfg.ssid.c_str(), cfg.pass.c_str());
 
     wifiStatusText = "подключение к " + cfg.ssid;
@@ -168,12 +178,14 @@ static void beginPortalStaAttempt()
         return;
     }
 
-    // Портал не выключаем: остаёмся AP+STA.
+    // Keep the portal alive: stay in AP+STA.
     if (!portalActive)
         startPortal();
     else
         WiFi.mode(WIFI_AP_STA);
 
+    WiFi.setHostname(MDNS_HOST);
+    WiFi.setSleep(false);
     WiFi.disconnect(false, false);
     delay(50);
     WiFi.begin(cfg.ssid.c_str(), cfg.pass.c_str());
@@ -205,7 +217,7 @@ bool requestPortalWifiRetry(String &answer)
         return true;
     }
 
-    // ESP подключается к WiFi ROUTER-канала, поэтому он должен быть включён.
+    // The ESP joins the router's WiFi, so the ROUTER output must be on first.
     if (!routerOn)
     {
         if (routerMode == LM_OFF)
@@ -248,7 +260,7 @@ void startManualPortalFromButton()
     portalStopAt = 0;
     logEvent("Кнопка: setup AP включён на 15 минут");
 
-    // Подтверждение двойного нажатия.
+    // Double-tap acknowledged: both LEDs blink once.
     digitalWrite(PIN_LED_GRID, HIGH);
     digitalWrite(PIN_LED_BATT, HIGH);
     delay(120);
@@ -273,7 +285,7 @@ void wifiRetryTick()
         {
             wifiRetryState = WIFI_RETRY_IDLE;
             wifiStatusText = "подключено: " + WiFi.localIP().toString();
-            return; // переход обработает wifiTick()
+            return; // transition handled by wifiTick()
         }
 
         if (millis() - wifiRetryStarted >= WIFI_CONNECT_TIMEOUT_MS)
@@ -298,23 +310,29 @@ void wifiTick()
     else if (!connected && wifiWasConnected)
     {
         wifiWasConnected = false;
-        wifiStatusText = portalActive ? "портал настройки" : "WiFi отключён";
+        wifiStatusText   = portalActive ? "портал настройки" : "WiFi отключён";
         logEvent("WiFi отключён");
+        // Stop mDNS so the next reconnect gets a fresh responder.
+        if (mdnsStarted)
+        {
+            MDNS.end();
+            mdnsStarted = false;
+        }
     }
 
-    // Остановить setup AP через некоторое время после успешного подключения.
+    // Close the setup AP a little after a successful connect.
     if (portalActive && portalStopAt != 0 && connected &&
         (long)(millis() - portalStopAt) >= 0)
     {
         stopPortal();
     }
 
-    // В штатном режиме пробуем восстановить STA автоматически.
-    // Если нагрузка выключена, бессмысленно искать WiFi выключенного роутера.
+    // Auto-reconnect STA in the run mode. If the ROUTER output is off, there
+    // is no point in scanning for a WiFi that isn't being powered.
     if (!connected && !portalActive && routerOn && cfg.ssid != "" &&
         wifiRetryState == WIFI_RETRY_IDLE)
     {
-        // После включения нагрузки даём роутеру время загрузиться.
+        // Give the router time to boot after being switched on.
         bool routerHadTime = (millis() - routerTurnedOnAt >= ROUTER_BOOT_MS);
 
         if (routerHadTime && millis() - lastReconnect >= WIFI_RECONNECT_MS)
@@ -341,15 +359,15 @@ void portalMaintenanceTick()
 
     if (portalActive)
     {
-        // Пока к setup AP кто-то подключён, считаем портал используемым.
+        // Any AP client keeps the portal alive.
         if (WiFi.softAPgetStationNum() > 0)
             portalLastActivity = millis();
 
-        // При пустом SSID портал нужен постоянно для первичной настройки.
+        // With no SSID configured the portal must stay open indefinitely.
         if (cfg.ssid == "" || connected)
             return;
 
-        // При отсутствии клиентов не держим AP бесконечно.
+        // Otherwise, don't keep an empty AP running forever.
         if (WiFi.softAPgetStationNum() == 0 &&
             portalLastActivity != 0 &&
             millis() - portalLastActivity >= cfg.portalIdleSec * 1000UL)
@@ -366,8 +384,8 @@ void portalMaintenanceTick()
         return;
     }
 
-    // Если после закрытия портала домашняя сеть так и не появилась —
-    // через несколько минут снова даём локальный способ настройки.
+    // If home WiFi never came back after we closed the portal, reopen it
+    // after a few minutes so the user has a local way in again.
     if (!connected && cfg.ssid != "" && portalReopenAt != 0 &&
         (long)(millis() - portalReopenAt) >= 0)
     {

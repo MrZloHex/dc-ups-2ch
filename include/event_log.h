@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// DC-UPS-2CH — журнал событий в оперативной памяти.
+// SPDX-License-Identifier: GPL-3.0-or-later
+// RAM ring-buffer event log.
 #pragma once
 
 #include <Arduino.h>
