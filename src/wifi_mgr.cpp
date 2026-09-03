@@ -159,12 +159,27 @@ bool connectSTABlocking(uint32_t timeoutMs)
     wifiStatusText = "подключение к " + cfg.ssid;
     logEvent("Подключение к WiFi: " + cfg.ssid);
 
-    unsigned long t0 = millis();
+    // Blink the green LED while associating so the user sees the ESP is alive
+    // and busy joining WiFi (typical case: cold boot or wake from deep sleep,
+    // when updateLeds() hasn't started running yet). ~2 Hz square wave.
+    unsigned long t0        = millis();
+    unsigned long nextBlink = 0;
+    bool          ledOn     = false;
     while (WiFi.status() != WL_CONNECTED && millis() - t0 < timeoutMs)
     {
         esp_task_wdt_reset();
-        delay(200);
+        if ((long)(millis() - nextBlink) >= 0)
+        {
+            ledOn     = !ledOn;
+            digitalWrite(PIN_LED_GRID, ledOn ? HIGH : LOW);
+            nextBlink = millis() + 250;
+        }
+        delay(50);
     }
+
+    // Leave the LED in a defined state; updateLeds() at the end of setup()
+    // will re-derive it from gridPresent.
+    digitalWrite(PIN_LED_GRID, LOW);
 
     return WiFi.status() == WL_CONNECTED;
 }
