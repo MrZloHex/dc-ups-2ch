@@ -44,7 +44,7 @@ ifndef BUILD_DATE
 BUILD_DATE := $(shell date -u +%Y-%m-%d)
 endif
 
-HW_VERSION ?= v1.0
+HW_VERSION ?= v2.1
 DOCREV     ?= $(GIT_HASH)
 
 # Export everything so children (scripts/inject_version.py, docs/Makefile)
