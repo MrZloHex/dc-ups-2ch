@@ -6,9 +6,10 @@
 > local web panel, sends notifications through `ntfy.sh`, and even answers
 > read-only status commands back through the same ntfy topic.
 
-**Firmware version:** `2026.09.02-v6` · **License:** [GPL-3.0-or-later](LICENSE)
+**Firmware version:** `2026.09.02-v6` · **Hardware:** `v2.1` · **License:** [GPL-3.0-or-later](LICENSE)
 · **[Documentation site](https://mrzlohex.github.io/dc-ups-2ch/)**
-· [Full Russian passport & manual (LaTeX)](docs/DC_UPS_documentation_v6.tex)
+· Passport [RU](docs/DC_UPS_documentation_v6.tex) / [EN](docs/DC_UPS_documentation_v6_en.tex)
+· User manual [RU](docs/DC_UPS_user_manual_v6.tex) / [EN](docs/DC_UPS_user_manual_v6_en.tex)
 
 <p align="center">
   <img src="hardware/enclosure/renders/exploded-front.png" alt="Exploded isometric — front panel, battery, aluminium extrusion shell" width="49%"/>
@@ -17,7 +18,7 @@
 
 <p align="center"><sub>
   Exploded isometric views from the public
-  <a href="https://cad.onshape.com/documents/1234567890abcdef/w/abcdef1234567890">Onshape</a>
+  <a href="https://cad.onshape.com/documents/ea66c330322b844216a03713/w/1c92cc427e11be4cf82566dd/e/3ae3fbe0cc714edd3fc95852">Onshape</a>
   model. Left: front panel with IEC C14 inlet and two DC output sockets pulled off, AGM battery visible in the aluminium extrusion. Right: back panel and the two-tier power PCB assembly pulled off.
   STEP files: <a href="hardware/enclosure/step/">hardware/enclosure/step/</a>.
 </sub></p>
@@ -65,7 +66,7 @@ marketplace) and puts the intelligence in the ESP32 firmware:
                                     Button ─┘ (GPIO14, EXT0 wake)
 ```
 
-Full wiring, GPIO map, calibration and BOM: [`docs/HARDWARE.md`](docs/HARDWARE.md).
+Full wiring, GPIO map, calibration and BOM: [`hardware/README.md`](hardware/README.md).
 
 ## Getting started
 
@@ -73,12 +74,12 @@ Full wiring, GPIO map, calibration and BOM: [`docs/HARDWARE.md`](docs/HARDWARE.m
 
 - ESP32 DevKit v1 (ESP-WROOM-32, USB-C or micro, CH340/CP2102 — either is fine)
 - [PlatformIO Core](https://platformio.org/install/cli) (or the VS Code extension)
-- The rest of the hardware from [`docs/HARDWARE.md`](docs/HARDWARE.md)
+- The rest of the hardware from [`hardware/README.md`](hardware/README.md)
 
 ### Build & flash
 
 ```bash
-git clone https://github.com/YOUR_USER/dc-ups-2ch.git
+git clone https://github.com/MrZloHex/dc-ups-2ch.git
 cd dc-ups-2ch
 
 # Everything at once (firmware + PDFs), stamped with version + git hash + date:
@@ -145,11 +146,9 @@ channel.
   Pages landing page linking to every PDF. This URL is also encoded in the QR
   code printed on the enclosure label — scan the label with any phone to jump
   straight here.
-- [`docs/HARDWARE.md`](docs/HARDWARE.md) — BOM, GPIO map, ASCII wiring, calibration
+- [`hardware/README.md`](hardware/README.md) — BOM, GPIO map, ASCII wiring, calibration
 - [`hardware/enclosure/`](hardware/enclosure/) — 3D-printable case (Onshape
-  source, STEP exports, CC-BY-SA 4.0) with ready-to-paste
-  [Printables](hardware/enclosure/PRINTABLES.md) and
-  [MakerWorld](hardware/enclosure/MAKERWORLD.md) listing templates
+  source, STEP exports and slicer-ready 3MFs, CC-BY-SA 4.0)
 - [`docs/DC_UPS_documentation_v6.tex`](docs/DC_UPS_documentation_v6.tex) /
   [`docs/DC_UPS_documentation_v6_en.tex`](docs/DC_UPS_documentation_v6_en.tex)
   — full passport, service manual, warranty template (Russian and English
@@ -177,8 +176,8 @@ see [LICENSE](LICENSE). If you build a product on top of this firmware,
 you must make your source available under the same license.
 
 **Enclosure / 3D model:** Creative Commons Attribution-ShareAlike 4.0
-International (CC-BY-SA 4.0) — see
-[`hardware/enclosure/LICENSE-CC-BY-SA-4.0.txt`](hardware/enclosure/LICENSE-CC-BY-SA-4.0.txt).
+International (CC-BY-SA 4.0) — see the notes in
+[`hardware/enclosure/README.md`](hardware/enclosure/README.md).
 
 Hardware wiring is documented for personal / educational use; recycled
 AC/DC bricks and Chinese DC/DC modules used in the BOM come with their

@@ -1,14 +1,7 @@
 # DC-UPS-2CH — enclosure
 
 3D-printable enclosure for the DC-UPS-2CH controller. Modelled in
-[Onshape](https://onshape.com/) and exported as STEP so anyone can remix
-in real CAD; slicers (PrusaSlicer, Bambu Studio, OrcaSlicer, Cura ≥ 5.7)
-all import STEP directly.
-
-- **License:** [CC-BY-SA 4.0](LICENSE-CC-BY-SA-4.0.txt)
-- **Source of truth:** the public Onshape document (link in
-  [PRINTABLES.md](PRINTABLES.md) / [MAKERWORLD.md](MAKERWORLD.md))
-- **Distributed files:** `step/*.step` and `renders/*.png` (see below)
+[Onshape](https://cad.onshape.com/documents/ea66c330322b844216a03713/w/1c92cc427e11be4cf82566dd/e/3ae3fbe0cc714edd3fc95852?renderMode=0&uiState=6a9a1a1390f1add03d0f572a)
 
 <p align="center">
   <img src="renders/exploded-front.png" alt="Exploded isometric — front panel, battery, aluminium extrusion shell" width="49%"/>
@@ -19,22 +12,23 @@ all import STEP directly.
 
 ```
 hardware/enclosure/
-├── LICENSE-CC-BY-SA-4.0.txt         model license
-├── README.md                        this file
-├── PRINTABLES.md                    ready-to-paste Printables listing
-├── MAKERWORLD.md                    ready-to-paste MakerWorld listing
-├── EXPORT_FROM_ONSHAPE.md           how to regenerate the STEP exports
+├── README.md              this file
 ├── renders/
-│   ├── exploded-front.png           iso view: front panel + battery exploded
-│   └── exploded-rear.png            iso view: back panel + PCB stack exploded
-└── step/
-    ├── dc-ups-2ch-assembly.step     full assembly for visualisation
-    ├── dc-ups-2ch-case-bottom.step  main body with battery bay
-    ├── dc-ups-2ch-case-top.step     lid with vents and button/LED cutouts
-    └── ...                          any additional brackets / clips
+│   ├── exploded-front.png     iso view: front panel + battery exploded
+│   └── exploded-rear.png      iso view: back panel + PCB stack exploded
+├── step/                  neutral STEP exports (for CAD / re-modelling)
+│   ├── Main.step              main aluminium-extrusion body
+│   ├── Level 1.step           lower PCB tier (charger + XL6009 outputs)
+│   ├── Level 2.step           upper PCB tier (ESP32 + I/O)
+│   ├── Side 1.step            front panel (IEC C14 inlet + DC output sockets)
+│   ├── Side 2.step            rear panel (button + LEDs + cable exits)
+│   ├── Battery Holder.step    AGM 12 V / 7 Ah cradle
+│   └── Dummy Sky.step         placeholder for the top cover volume
+└── 3mf/                   slicer-ready assemblies (drop straight into a slicer)
+    ├── DC_UPS.3mf             full assembly view
+    ├── Main.3mf, Level 1.3mf, Level 2.3mf, Side 1.3mf, Side 2.3mf,
+    └── Battery Holder.3mf, Dummy Sky.3mf
 ```
-
-If you rename a part in Onshape, re-export it and update this list.
 
 ## Print settings (baseline)
 
@@ -51,14 +45,13 @@ If you rename a part in Onshape, re-export it and update this list.
 |                  | opening-up so the battery bay prints support-free        |
 | Brim             | 5 mm on the case bottom, none on the lid                 |
 
-Tune to your printer. These are conservative and prioritise heat resistance
-over speed.
+## License
 
-## Adding STL / 3MF
+The 3D model, STEP exports, 3MF slicer packages and renders in this
+directory are released under
+[Creative Commons Attribution-ShareAlike 4.0 International (CC-BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/).
+This is *separate* from the firmware / documentation licence — see the
+top-level [`LICENSE`](../../LICENSE) for those.
 
-Only STEP is shipped by design (it's the most useful for remixing).
-If a downstream user needs STL/3MF, either:
 
-1. Drop a STEP into any slicer and export STL from there, or
-2. Re-export from Onshape as STL/3MF and drop the files into
-   `step/` (or a sibling `stl/` folder — update this README either way).
+

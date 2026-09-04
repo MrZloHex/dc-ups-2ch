@@ -2,9 +2,7 @@
 
 > This is a "buy the modules, don't design a PCB" project. Everything is
 > wired point-to-point (or on a small perfboard) so anyone with a soldering
-> iron can reproduce it. The full Russian passport (`DC_UPS_documentation_v6.tex`)
-> has the same information plus service checklists, warranty template and
-> service diagrams — this file is the English quick reference.
+> iron can reproduce it. 
 
 ## Bill of materials
 
@@ -67,36 +65,26 @@ change needed.
 
 ```
               +Vbus 13.8 V (charger + battery via fuse)
-                          │
-                          │
-                     ┌────┴─────┐    Gate 10 kΩ pull-up
-                     │  P-MOSFET │ ◀──────────┐
-                     │  (S=Vbus) │            │
-                     └────┬─────┘             │
-                          │                   │
-                     Drain│                   │
-                          ▼                   │
-                    XL6009 IN                 │
-                          │                   │
-                    XL6009 OUT ─▶ ROUTER / ONT│
-                                              │
-                                              │
-                                   ┌──────────┴──┐
-                                   │   2N2222     │  (BJT open when GPIO HIGH)
-                                   │  base ← 1kΩ │
-                                   │              │
-                          GPIO32 ─▶│ base         │
-                    (or  GPIO25)   │ collector ──►│ P-MOSFET Gate
-                                   │ emitter ─── GND
-                                   └──────────────┘
+                          │                  │
+                          │                  │ 
+                          │Source           100 KOhm  
+                     ┌────┴─────┐    Gate    │ 	
+                     │ P-MOSFET │ ◀──────────┤
+                     │ (S=Vbus) │            │
+                     └────┬─────┘            │
+                          │                100 Ohm  
+                     Drain│                  │
+                          ▼                  │
+                    XL6009 IN                │
+                                             │Collector
+                                             │
+                                   ┌─────────┴──┐
+                                   │   2N2222   │  (BJT open when GPIO HIGH)
+           GPIO32 ── 1kOhm ──┬───▶ │            │
+        (or  GPIO25)      10 KOhm  └────────────┘
+                             │
+                            GND
 ```
-
-Logic:
-
-- GPIO **HIGH** → NPN saturates → pulls the P-MOSFET gate to GND
-  → **P-MOSFET conducts → load ON**.
-- GPIO **LOW** → NPN off → gate is held at Vbus by the 10 kΩ pull-up
-  → **P-MOSFET off → load OFF**.
 
 ## Charger settings (XL4016)
 
@@ -158,15 +146,3 @@ that the switching noise from the buck-boost modules doesn't couple into
 the ADC dividers. A short common ground point (star ground) near the
 battery negative helps a lot.
 
-## Enclosure
-
-A 3D-printable enclosure lives at
-[`../hardware/enclosure/`](../hardware/enclosure/). Modelled in
-Onshape, distributed as STEP files (import directly in PrusaSlicer /
-Bambu Studio / OrcaSlicer), licensed under CC-BY-SA 4.0. Ready-to-paste
-listings for Printables and MakerWorld are in the same folder.
-
-Recommended print: **PETG** (or ABS/ASA) — not PLA, because the
-charger and both DC/DC modules run warm enough to creep PLA over time.
-0.20 mm layers, 4 perimeters, 25–30 % gyroid infill, supports only for
-lid cutouts.

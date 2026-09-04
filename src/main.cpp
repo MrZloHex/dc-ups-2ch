@@ -8,8 +8,8 @@
 //   - staged auto-recovery: probe -> power-cycle -> optional ESP reboot.
 //
 // No external Arduino libraries: everything ships in the ESP32 core.
-// Wiring, GPIO map, BOM: docs/HARDWARE.md.
-// Full Russian passport: docs/DC_UPS_documentation_v6.tex.
+// Wiring, GPIO map, BOM: hardware/README.md.
+// Full passport: docs/DC_UPS_documentation_v6.tex (RU) / _en.tex (EN).
 
 #include <Arduino.h>
 #include "esp_task_wdt.h"
