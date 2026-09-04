@@ -6,7 +6,10 @@
 # Targets:
 #   make          # same as `make all` — build every PDF (regenerates build_info first)
 #   make all      # build every PDF listed in TARGETS
-#   make doc      # build only the passport / manual
+#   make doc      # build both language variants of the passport
+#   make manual   # build both language variants of the user manual
+#   make en       # build the two English PDFs
+#   make ru       # build the two Russian PDFs + label
 #   make label    # build only the enclosure label
 #   make watch    # rebuild on save (needs latexmk -pvc)
 #   make clean    # remove intermediate build artefacts, keep the PDFs
@@ -52,8 +55,10 @@ LATEXMKOPTS := -xelatex -interaction=nonstopmode -halt-on-error -file-line-error
 
 # List every top-level .tex here. Anything that gets \include'd is picked
 # up automatically by latexmk.
-SOURCES := DC_UPS_documentation_v6.tex \
-           DC_UPS_user_manual_v6.tex \
+SOURCES := DC_UPS_documentation_v6.tex    \
+           DC_UPS_documentation_v6_en.tex \
+           DC_UPS_user_manual_v6.tex      \
+           DC_UPS_user_manual_v6_en.tex   \
            DC_UPS_label_v6.tex
 
 TARGETS := $(SOURCES:.tex=.pdf)
@@ -61,16 +66,20 @@ TARGETS := $(SOURCES:.tex=.pdf)
 BUILD_INFO      := build_info.tex
 BUILD_INFO_JSON := build_info.json
 
-.PHONY: all doc manual label watch clean distclean help version build_info
+.PHONY: all doc manual label en ru watch clean distclean help version build_info
 .DEFAULT_GOAL := all
 
 # ------------------------- Targets -------------------------
 
 all: $(TARGETS)
 
-doc:    DC_UPS_documentation_v6.pdf
-manual: DC_UPS_user_manual_v6.pdf
+doc:    DC_UPS_documentation_v6.pdf DC_UPS_documentation_v6_en.pdf
+manual: DC_UPS_user_manual_v6.pdf   DC_UPS_user_manual_v6_en.pdf
 label:  DC_UPS_label_v6.pdf
+
+# Convenience: build just one language.
+en: DC_UPS_documentation_v6_en.pdf DC_UPS_user_manual_v6_en.pdf
+ru: DC_UPS_documentation_v6.pdf    DC_UPS_user_manual_v6.pdf    DC_UPS_label_v6.pdf
 
 # Every PDF depends on the freshly regenerated build_info.
 # .PHONY makes build_info always run, so the PDFs pick up new git hashes / dates

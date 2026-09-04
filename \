@@ -150,13 +150,10 @@ channel.
   source, STEP exports, CC-BY-SA 4.0) with ready-to-paste
   [Printables](hardware/enclosure/PRINTABLES.md) and
   [MakerWorld](hardware/enclosure/MAKERWORLD.md) listing templates
-- [`docs/DC_UPS_documentation_v6.tex`](docs/DC_UPS_documentation_v6.tex) /
-  [`docs/DC_UPS_documentation_v6_en.tex`](docs/DC_UPS_documentation_v6_en.tex)
-  — full passport, service manual, warranty template (Russian and English
-  variants; both stamped from the same `build_info.tex`)
-- [`docs/DC_UPS_user_manual_v6.tex`](docs/DC_UPS_user_manual_v6.tex) /
-  [`docs/DC_UPS_user_manual_v6_en.tex`](docs/DC_UPS_user_manual_v6_en.tex)
-  — short A5 user manual (Russian and English) with local-panel + docs-site QR codes
+- [`docs/DC_UPS_documentation_v6.tex`](docs/DC_UPS_documentation_v6.tex) — full
+  Russian passport, service manual, warranty template
+- [`docs/DC_UPS_user_manual_v6.tex`](docs/DC_UPS_user_manual_v6.tex) — short
+  A5 user manual (8 pages, Russian) with local-panel + docs-site QR codes
 - [`docs/DC_UPS_label_v6.tex`](docs/DC_UPS_label_v6.tex) — 90 × 55 mm enclosure
   label; QR code encodes the documentation-site URL above
 

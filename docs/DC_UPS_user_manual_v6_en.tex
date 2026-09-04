@@ -1,0 +1,305 @@
+\documentclass[10.5pt,a5paper]{article}
+
+\usepackage{fontspec}
+\setmainfont{DejaVu Serif}
+\setsansfont{DejaVu Sans}
+\setmonofont{DejaVu Sans Mono}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\geometry{left=13mm,right=13mm,top=14mm,bottom=16mm}
+\usepackage{microtype}
+\usepackage{array,tabularx,booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{qrcode}
+\usepackage{graphicx}
+
+% Build identity — same file as the passport and label. Fallbacks let this
+% .tex compile standalone in a TeX editor without `make`.
+\IfFileExists{build_info.tex}{\input{build_info}}{%
+  \newcommand{\hwversion}{v2.1}%
+  \newcommand{\fwversion}{dev}%
+  \newcommand{\builddate}{unknown}%
+  \newcommand{\buildcommit}{unknown}%
+  \newcommand{\docrev}{unknown}%
+}
+
+% Public documentation site (GitHub Pages). Also the URL encoded in the
+% QR code on the enclosure label — change in one place and everything follows.
+\newcommand{\docsurl}{https://mrzlohex.github.io/dc-ups-2ch/}
+
+\definecolor{accent}{HTML}{1E5B4F}
+\definecolor{lightaccent}{HTML}{EAF3F1}
+\definecolor{warn}{HTML}{8B1E1E}
+\definecolor{lightwarn}{HTML}{F9ECEC}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=accent,
+  pdfauthor={DC-UPS-2CH manufacturer},
+  pdftitle={DC-UPS-2CH quick user manual \fwversion}
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.4em}
+\renewcommand{\arraystretch}{1.15}
+\setlist[itemize]{leftmargin=5.5mm,itemsep=1.5pt,topsep=2pt}
+\setlist[enumerate]{leftmargin=6.5mm,itemsep=2pt,topsep=2pt}
+
+\titleformat{\section}{\large\bfseries\color{accent}}{\thesection.}{0.45em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.45em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\sffamily DC-UPS-2CH}
+\rhead{\sffamily User manual}
+\cfoot{\sffamily\small \thepage}
+\renewcommand{\headrulewidth}{0.35pt}
+\setlength{\headheight}{13pt}
+
+\newtcolorbox{infobox}[1][]{colback=lightaccent,colframe=accent,boxrule=0.7pt,arc=1.5mm,left=2mm,right=2mm,top=1.5mm,bottom=1.5mm,#1}
+\newtcolorbox{warnbox}[1][]{colback=lightwarn,colframe=warn,boxrule=0.7pt,arc=1.5mm,left=2mm,right=2mm,top=1.5mm,bottom=1.5mm,#1}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{10mm}
+{\sffamily\bfseries\fontsize{24}{28}\selectfont DC-UPS-2CH\\[2mm]}
+{\sffamily\Large Quick user manual\\[5mm]}
+{\sffamily\small for firmware \fwversion\ (build \buildcommit, \builddate)}
+
+\vspace{9mm}
+\begin{infobox}
+\centering
+Dual-channel backup power supply for router, ONT and other compatible low-current network equipment.
+\end{infobox}
+
+\vspace{7mm}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+Model & DC-UPS-2CH \hwversion \\
+Serial number & \rule{45mm}{0.4pt} \\
+Date of transfer & \rule{45mm}{0.4pt} \\
+Output ROUTER & \rule{18mm}{0.4pt} V / \rule{18mm}{0.4pt} A \\
+Output ONT & \rule{18mm}{0.4pt} V / \rule{18mm}{0.4pt} A \\
+\bottomrule
+\end{tabularx}
+
+\vfill
+\begin{warnbox}
+\textbf{Warning.} Dangerous 230~V mains voltage is present inside the enclosure. The user must not open the enclosure while the mains or the battery is connected.
+\end{warnbox}
+\vfill
+{\small Keep this manual next to the device.}
+\end{titlepage}
+
+\section{What the device does}
+
+DC-UPS-2CH automatically maintains power on two independent outputs. Under normal conditions the device is powered from the mains and keeps the battery in a charged state. When 230~V mains is lost the switch-over to the battery happens automatically, with no user action required.
+
+\begin{tabularx}{\textwidth}{@{}p{44mm}X@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Mains input & 230~V AC, 50~Hz \\
+Battery & 12~V, 7~Ah, AGM/SLA \\
+Float-charge voltage & 13.8~V \\
+Charge current limit & 1.5~A \\
+Battery early warning & 11.5~V \\
+Load disconnect (LVD) & 11.0~V \\
+Load re-enable threshold & 12.5~V \\
+\bottomrule
+\end{tabularx}
+
+\begin{infobox}[title=Normal operation]
+Nothing needs to be switched over during a mains outage. The outputs keep running on the battery until its voltage reaches the protection threshold.
+\end{infobox}
+
+\section{Daily use}
+
+\subsection{Turning on}
+\begin{enumerate}
+  \item Confirm the required outputs are connected.
+  \item If the enclosure has separate mechanical output switches, set the required channels to the ON position.
+  \item Apply 230~V mains.
+  \item Wait for the connected equipment and Wi-Fi to come up.
+\end{enumerate}
+
+Under normal operation no further manual control is required.
+
+\subsection{During a mains outage}
+The device automatically switches to battery. If a network path is available, an ntfy notification is sent. At battery voltage 11.5~V an early-warning notification is sent. At 11.0~V both managed outputs are shut off to protect the battery.
+
+After protective shut-off the ESP32 enters emergency deep sleep. It wakes periodically and checks whether the mains has returned. When it does, the device automatically resumes normal operation.
+
+\begin{warnbox}[title=Do not confuse with Shelf Sleep]
+After emergency deep sleep the device wakes automatically once the mains returns. In \textbf{Shelf Sleep} the return of 230~V does \textbf{not} wake the device.
+\end{warnbox}
+
+\section{Button and indication}
+
+\subsection{Service button}
+\begin{tabularx}{\textwidth}{@{}p{40mm}X@{}}
+\toprule
+\textbf{Gesture} & \textbf{Result} \\
+\midrule
+1 short press & Send full status message to ntfy \\
+2 short presses & Open \texttt{DC-UPS-Setup} access point for about 15 minutes \\
+Hold for 10~s & Enter Shelf Sleep \\
+Any press while in Shelf Sleep & Wake the device and perform a normal start-up \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Button acknowledgement}
+\begin{itemize}
+  \item 2 green blinks --- status successfully sent to ntfy;
+  \item 3 red blinks --- status could not be sent;
+  \item short simultaneous flash of both LEDs --- setup AP has been opened;
+  \item 3 red blinks before shutdown --- Shelf Sleep has been accepted.
+\end{itemize}
+
+\subsection{Normal indication}
+\begin{tabularx}{\textwidth}{@{}p{35mm}X@{}}
+\toprule
+Green LED & external power / mains present \\
+Red LED & battery state, warning or emergency mode \\
+\bottomrule
+\end{tabularx}
+
+While the device is booting and joining Wi-Fi, the green LED blinks at about 2~Hz. When the setup access point is active, both LEDs alternate slowly (green/red, 500~ms each side).
+
+\section{Shelf Sleep}
+
+Shelf Sleep is intended for transport and long-term storage, when both outputs and Wi-Fi must be completely off.
+
+\textbf{To power the device down for storage:}
+\begin{enumerate}
+  \item Hold the service button for about 10 seconds.
+  \item Wait for three red blinks.
+  \item Release the button.
+  \item Both outputs will switch off, Wi-Fi will go down, the ESP32 will enter deep sleep with no periodic wake-up.
+\end{enumerate}
+
+\textbf{To power the device on again:} press the service button once.
+
+\begin{warnbox}[title=Important]
+In Shelf Sleep the device wakes \textbf{only from a physical button press}. Connecting or restoring 230~V mains does not wake it.
+\end{warnbox}
+
+\section{Web panel and Wi-Fi}
+
+Once connected to the home network, the panel is available at:
+\begin{center}
+\large\texttt{http://dc-ups.local/}
+\end{center}
+
+The IP address delivered through ntfy on every successful Wi-Fi connect can also be used directly.
+
+The panel shows voltages, mains / output / Wi-Fi / internet status and the event log; lets the user manage ROUTER/ONT modes; perform channel restarts; and change Wi-Fi, ntfy and protection settings.
+
+\subsection{If the home Wi-Fi is not available}
+Double-press the service button quickly. An access point will appear:
+
+\begin{center}
+\texttt{DC-UPS-Setup}
+\end{center}
+
+Default password: \texttt{dc-ups-setup}, unless it was changed during commissioning.
+
+\section{ntfy}
+
+The device sends notifications about important events on its own. In addition, one of the following commands may be posted to the same topic:
+
+\begin{center}
+\texttt{!ups}\qquad \texttt{!ups status}\qquad \texttt{!ups ping}
+\end{center}
+
+The commands only \textbf{query} state and \textbf{do not control the outputs}. The reply includes battery voltage, 24~V rail, mains status, ROUTER/ONT, internet, uptime, RSSI and IP.
+
+\begin{infobox}
+ntfy commands only work while the ESP32 is awake, connected to Wi-Fi and has internet access. In emergency deep sleep and in Shelf Sleep the Wi-Fi radio is off.
+\end{infobox}
+
+\section{Connecting equipment}
+
+Before connecting a new router, ONT or other device, always verify:
+\begin{itemize}
+  \item required output voltage;
+  \item barrel plug polarity;
+  \item permissible current of the corresponding output;
+  \item the ROUTER / ONT labelling on the enclosure.
+\end{itemize}
+
+For the standard cylindrical DC connector of this unit, polarity must match the marking on the enclosure. Do not connect equipment when the required voltage or polarity is unknown.
+
+\section{Troubleshooting}
+
+\begin{tabularx}{\textwidth}{@{}p{43mm}X@{}}
+\toprule
+\textbf{Symptom} & \textbf{What to do} \\
+\midrule
+No power on the outputs & Check mains, mechanical switches, battery voltage and the per-channel mode in the panel \\
+Web panel not reachable & Try \texttt{dc-ups.local}; if it fails, double-press the button and connect to the setup AP \\
+Outputs shut off after a mains outage & Normal LVD on low battery; wait for the mains to return \\
+Device did not start after mains was restored & Shelf Sleep may be active --- press the service button \\
+3 red blinks after a short press & Status was not sent to ntfy; check Wi-Fi / internet / topic \\
+\bottomrule
+\end{tabularx}
+
+If the fault repeats, do not open the device while it is energised and contact the manufacturer or system integrator.
+
+\section{Safety and maintenance}
+
+\begin{itemize}
+  \item do not operate the device with the enclosure open;
+  \item do not allow water, condensation or airflow obstruction;
+  \item do not short-circuit the battery terminals;
+  \item do not exceed the output ratings printed on the label;
+  \item the battery is a consumable part and loses capacity over time;
+  \item if the autonomous runtime shortens noticeably, the battery should be checked and, if necessary, replaced according to the full service documentation.
+\end{itemize}
+
+\begin{warnbox}
+Before opening the enclosure disconnect 230~V mains and the battery. Internal servicing is intended for trained personnel.
+\end{warnbox}
+
+\newpage
+\section*{Quick reference}
+
+\begin{infobox}
+\textbf{Normal operation:} nothing to switch.\\
+\textbf{Mains lost:} device works from the battery automatically.\\
+\textbf{Mains returned:} device recovers from emergency deep sleep automatically.\\
+\textbf{1x button:} status to ntfy.\\
+\textbf{2x button:} setup AP.\\
+\textbf{Hold 10~s:} Shelf Sleep.\\
+\textbf{Wake from storage:} press the button.\\
+\textbf{Panel:} \texttt{http://dc-ups.local/}.\\
+\textbf{ntfy:} \texttt{!ups status} or \texttt{!ups ping}.
+\end{infobox}
+
+\vspace{6mm}
+\begin{center}
+\begin{tabular}{@{}c@{\hspace{14mm}}c@{}}
+\qrcode[height=28mm]{http://dc-ups.local/} & \qrcode[height=28mm]{\docsurl} \\[1.5mm]
+\\
+\\
+{\small\parbox{40mm}{\centering Local web panel\\(same LAN, mDNS)}} &
+{\small\parbox{40mm}{\centering Online documentation\\(full passport, PDF)}} \\
+\end{tabular}
+\end{center}
+
+\vfill
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+Manufacturer contact: & \rule{50mm}{0.4pt} \\
+Document date: & \builddate \\
+Revision: & User manual \fwversion\ / \docrev \\
+\end{tabularx}
+
+\end{document}

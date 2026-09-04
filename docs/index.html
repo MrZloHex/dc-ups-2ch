@@ -510,8 +510,8 @@
       <p class="subtitle" data-i18n="subtitle"></p>
 
       <div class="actions">
-        <a class="button primary" href="DC_UPS_user_manual_v6.pdf" data-i18n="manualButton"></a>
-        <a class="button secondary" href="DC_UPS_documentation_v6.pdf" data-i18n="passportButton"></a>
+        <a id="hero-manual"   class="button primary"   href="DC_UPS_user_manual_v6_en.pdf"    data-i18n="manualButton"></a>
+        <a id="hero-passport" class="button secondary" href="DC_UPS_documentation_v6_en.pdf" data-i18n="passportButton"></a>
       </div>
     </div>
   </div>
@@ -554,7 +554,7 @@
           <h3 data-i18n="manualTitle"></h3>
           <p data-i18n="manualText"></p>
         </div>
-        <a class="resource-link" href="DC_UPS_user_manual_v6.pdf" data-i18n="openPdf"></a>
+        <a id="doc-manual" class="resource-link" href="DC_UPS_user_manual_v6_en.pdf" data-i18n="openPdf"></a>
       </article>
 
       <article class="resource">
@@ -563,7 +563,7 @@
           <h3 data-i18n="passportTitle"></h3>
           <p data-i18n="passportText"></p>
         </div>
-        <a class="resource-link" href="DC_UPS_documentation_v6.pdf" data-i18n="openPdf"></a>
+        <a id="doc-passport" class="resource-link" href="DC_UPS_documentation_v6_en.pdf" data-i18n="openPdf"></a>
       </article>
 
       <article class="resource">
@@ -779,6 +779,20 @@ function setLanguage(lang) {
       el.textContent = t[key];
     }
   });
+
+  // Route PDF links to the language-appropriate variant. Russian keeps the
+  // canonical filenames (DC_UPS_*_v6.pdf); English is the `_en` variant.
+  const suffix = lang === "ru" ? "" : "_en";
+  const manualHref   = `DC_UPS_user_manual_v6${suffix}.pdf`;
+  const passportHref = `DC_UPS_documentation_v6${suffix}.pdf`;
+  const heroManual   = document.getElementById("hero-manual");
+  const heroPassport = document.getElementById("hero-passport");
+  const docManual    = document.getElementById("doc-manual");
+  const docPassport  = document.getElementById("doc-passport");
+  if (heroManual)   heroManual.href   = manualHref;
+  if (heroPassport) heroPassport.href = passportHref;
+  if (docManual)    docManual.href    = manualHref;
+  if (docPassport)  docPassport.href  = passportHref;
 
   document.getElementById("lang-en").classList.toggle("active", lang === "en");
   document.getElementById("lang-ru").classList.toggle("active", lang === "ru");
