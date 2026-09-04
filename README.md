@@ -157,7 +157,7 @@ channel.
   - short A5 user manual (Russian and English) with local-panel + docs-site QR codes
 - [`docs/DC_UPS_label_v6.tex`](docs/DC_UPS_label_v6.tex) - 90 × 55 mm enclosure
   label; QR code encodes the documentation-site URL above
-  - [Printables](https://www.printables.com/model/1832207-dc-ups-2ch-esp32-dc-ups-for-router-ont) - Page on printables
+- [Printables](https://www.printables.com/model/1832207-dc-ups-2ch-esp32-dc-ups-for-router-ont) - Page on printables
 
 ## Contributing
 
