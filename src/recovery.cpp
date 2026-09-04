@@ -6,6 +6,7 @@
 #include "power.h"
 #include "wifi_mgr.h"
 #include "config_store.h"
+#include "boot_flow.h"
 
 #include <WiFi.h>
 #include "esp_task_wdt.h"
@@ -191,13 +192,12 @@ void networkRecoveryTick()
 
     if (rtcAutoPowerCycles < AUTO_MAX_POWER_CYCLES)
     {
-        // Step 1: if WiFi itself dropped, power-cycle ROUTER; if WiFi is up
-        // but WAN is dead, power-cycle ONT. Step 2: both.
-        PowerTarget target;
-        if (rtcAutoPowerCycles == 0)
-            target = (WiFi.status() == WL_CONNECTED) ? TARGET_ONT : TARGET_ROUTER;
-        else
-            target = TARGET_BOTH;
+        // Selection logic lives in boot_flow.cpp (pure, native-tested):
+        //   cycle 0: failing layer only (ROUTER if Wi-Fi is down, ONT if WAN);
+        //   cycle 1+: always both channels together.
+        PowerTarget target = (PowerTarget)pickRecoveryTarget(
+            rtcAutoPowerCycles,
+            WiFi.status() == WL_CONNECTED);
 
         startAutomaticPowerCycle(target, badReason);
         return;

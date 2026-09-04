@@ -28,7 +28,7 @@
 % Build identity is normally injected by `make -C docs build_info`.
 % Fallbacks below let the .tex compile standalone in a TeX editor without make.
 \IfFileExists{build_info.tex}{\input{build_info}}{%
-  \newcommand{\hwversion}{v1.0}%
+  \newcommand{\hwversion}{v2.1}%
   \newcommand{\fwversion}{dev}%
   \newcommand{\builddate}{unknown}%
   \newcommand{\buildcommit}{unknown}%
@@ -165,7 +165,7 @@ DC-UPS-2CH представляет собой двухканальный ист
 Контроль АКБ & ADC, GPIO35, делитель 100~кОм / 10~кОм \\
 Контроль 24~В & ADC, GPIO34, делитель 100~кОм / 10~кОм \\
 Канал ROUTER & GPIO32 $\rightarrow$ NPN 2N2222 $\rightarrow$ P-MOSFET \\
-Канал ONT & GPIO26 $\rightarrow$ NPN 2N2222 $\rightarrow$ P-MOSFET \\
+Канал ONT & GPIO25 $\rightarrow$ NPN 2N2222 $\rightarrow$ P-MOSFET \\
 Сервисная кнопка & GPIO14, замыкание на GND, INPUT\_PULLUP; RTC GPIO / EXT0 wake в режиме хранения \\
 LED сети & GPIO13 \\
 LED АКБ/аварии & GPIO12 \\
@@ -227,7 +227,7 @@ Shelf Sleep / режим хранения & без периодического 
 \node[draw,rounded corners,below=35mm of bus,minimum width=34mm,minimum height=10mm,fill=lightaccent] (esp) {ESP32};
 \draw[->] (ac)--(psu); \draw[->] (psu)--(chg); \draw[->] (chg)--(bus); \draw[<->] (bus)--(bat);
 \draw[->] (bus)--(r); \draw[->] (bus)--(o); \draw[->] (r)--(rr); \draw[->] (o)--(oo);
-\draw[->,dashed] (esp)--node[left]{GPIO32}(r); \draw[->,dashed] (esp)--node[right]{GPIO26}(o);
+\draw[->,dashed] (esp)--node[left]{GPIO32}(r); \draw[->,dashed] (esp)--node[right]{GPIO25}(o);
 \draw[->,dashed] (bus)--node[right]{ADC}(esp);
 \end{tikzpicture}
 \end{center}

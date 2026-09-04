@@ -6,6 +6,7 @@
 #include "ntfy.h"
 #include "power.h"
 #include "hardware.h"
+#include "time_sync.h"
 
 #include <WiFi.h>
 #include <WebServer.h>
@@ -49,6 +50,7 @@ void stopPortal()
     portalStopAt        = 0;
     manualPortalSession = false;
     manualPortalUntil   = 0;
+    ledMode             = LED_MODE_RUN;
 
     if (WiFi.status() == WL_CONNECTED)
         WiFi.mode(WIFI_STA);
@@ -87,6 +89,7 @@ void startPortal()
 
     mode         = MODE_PORTAL;
     portalStopAt = 0;
+    ledMode      = LED_MODE_PORTAL;
 
     if (WiFi.status() != WL_CONNECTED)
         wifiStatusText = "портал настройки";
@@ -98,10 +101,15 @@ void handleWifiConnected()
 
     wifiStatusText = "подключено: " + ip;
     mode           = MODE_RUN;
+    ledMode        = LED_MODE_RUN;
 
     // Auto-reconnect can re-enable modem sleep, which drops multicast (mDNS).
     // Force it off on every (re)connect.
     WiFi.setSleep(false);
+
+    // Kick NTP off as soon as we have an IP so the event log gets wall-clock
+    // timestamps within a second or two of joining.
+    ntpBegin();
 
     logEvent("WiFi подключён: " + cfg.ssid + ", IP " + ip);
     Serial.println("[ntfy] topic: " + (cfg.ntfy == "" ? String("NOT SET") : cfg.ntfy));
@@ -159,27 +167,21 @@ bool connectSTABlocking(uint32_t timeoutMs)
     wifiStatusText = "подключение к " + cfg.ssid;
     logEvent("Подключение к WiFi: " + cfg.ssid);
 
-    // Blink the green LED while associating so the user sees the ESP is alive
-    // and busy joining WiFi (typical case: cold boot or wake from deep sleep,
-    // when updateLeds() hasn't started running yet). ~2 Hz square wave.
-    unsigned long t0        = millis();
-    unsigned long nextBlink = 0;
-    bool          ledOn     = false;
+    // Hand the LEDs to the state machine: green blinks ~2 Hz while joining.
+    ledMode = LED_MODE_BOOT_WIFI;
+
+    unsigned long t0 = millis();
     while (WiFi.status() != WL_CONNECTED && millis() - t0 < timeoutMs)
     {
         esp_task_wdt_reset();
-        if ((long)(millis() - nextBlink) >= 0)
-        {
-            ledOn     = !ledOn;
-            digitalWrite(PIN_LED_GRID, ledOn ? HIGH : LOW);
-            nextBlink = millis() + 250;
-        }
+        updateLeds();
         delay(50);
     }
 
-    // Leave the LED in a defined state; updateLeds() at the end of setup()
-    // will re-derive it from gridPresent.
-    digitalWrite(PIN_LED_GRID, LOW);
+    // Give control back to RUN indication; caller may switch to PORTAL if it
+    // decides to open the setup AP.
+    ledMode = LED_MODE_RUN;
+    updateLeds();
 
     return WiFi.status() == WL_CONNECTED;
 }

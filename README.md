@@ -33,8 +33,9 @@ marketplace) and puts the intelligence in the ESP32 firmware:
 - true low-voltage disconnect with configurable thresholds and hysteresis;
 - **two independent DC outputs** (ROUTER, ONT) with per-channel manual override
   and remote restart;
-- automatic Wi-Fi / internet health check with staged recovery (restart ONT →
-  restart router → restart both → optionally reboot the ESP);
+- automatic Wi-Fi / internet health check with staged recovery (probe →
+  restart the failing layer: ONT if only WAN is dead, ROUTER if Wi-Fi itself
+  is gone → restart both → optionally reboot the ESP);
 - push notifications via [ntfy.sh](https://ntfy.sh/) — outages, LVD, boots,
   auto-recovery actions;
 - inbound read-only commands over ntfy: `!ups`, `!ups status`, `!ups ping`;
@@ -56,7 +57,7 @@ marketplace) and puts the intelligence in the ESP32 firmware:
                         ROUTER                                  ONT / AUX
                           ▲                                       ▲
                           │                                       │
-                          └─── GPIO32 ─── ESP32 ─── GPIO26 ───────┘
+                          └─── GPIO32 ─── ESP32 ─── GPIO25 ───────┘
                                             │
                                             ▼
                                     ADC ◀── 24 V bus & battery

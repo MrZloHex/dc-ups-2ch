@@ -25,6 +25,7 @@
 #include "recovery.h"
 #include "sleep_modes.h"
 #include "web_ui.h"
+#include "boot_flow.h"
 
 void setup()
 {
@@ -38,6 +39,10 @@ void setup()
     esp_task_wdt_add(NULL);
 
     loadConfig();
+
+    // Restore persistent event-log tail BEFORE the boot line so pre-reboot
+    // entries appear first, in order, and the fresh "BOOT ..." line follows.
+    loadPersistentEventLog();
 
     // First measurement before WiFi — also decides whether to go straight
     // back into emergency sleep on a low battery.
@@ -54,36 +59,47 @@ void setup()
     bool wokeFromEmergencySleep =
         (wakeCause == ESP_SLEEP_WAKEUP_TIMER && rtcEmergencySleep);
 
-    if (wokeFromEmergencySleep)
-    {
-        rtcSleepWakeCount++;
+    BootInputs bin = {
+        wokeFromEmergencySleep,
+        gridPresent, lastVbatt,
+        cfg.battCutoff, cfg.battRestore, cfg.battSleep,
+        cfg.deepSleepEnabled
+    };
 
-        // In emergency mode we do NOT bring WiFi up every 30 s — just measure
-        // and sleep again. Full boot only when grid is back or battery recovered.
-        if (!gridPresent && lastVbatt < cfg.battRestore)
+    switch (decideBootAction(bin))
+    {
+        case BOOT_EMERGENCY_SLEEP_AGAIN:
         {
+            rtcSleepWakeCount++;
             Serial.printf("Emergency wake #%lu: Vbat=%.2f V24=%.2f -> sleep again\n",
                           (unsigned long)rtcSleepWakeCount, lastVbatt, lastVgrid);
-            emergencySleepTimerOnly();
+            emergencySleepTimerOnly();  // [[noreturn]]
         }
+        break;
 
-        uint32_t sleptChecks = rtcSleepWakeCount;
-        rtcEmergencySleep    = false;
-        rtcSleepWakeCount    = 0;
+        case BOOT_EMERGENCY_SLEEP_COLD:
+        {
+            rtcEmergencySleep = true;
+            rtcShelfSleep     = false;
+            rtcSleepWakeCount = 0;
+            Serial.printf("Cold boot with low battery %.2f V -> emergency sleep\n",
+                          lastVbatt);
+            emergencySleepTimerOnly();  // [[noreturn]]
+        }
+        break;
 
-        nextWifiConnectReason =
-            "ИБП проснулся после аварийного сна. Проверок во сне: " +
-            String(sleptChecks) + ".";
-    }
-    else if (cfg.deepSleepEnabled && !gridPresent && lastVbatt <= cfg.battSleep)
-    {
-        // Cold-booted with a deeply-discharged battery — don't bring the
-        // radio up, don't finish killing the battery.
-        rtcEmergencySleep = true;
-        rtcShelfSleep     = false;
-        rtcSleepWakeCount = 0;
-        Serial.printf("Cold boot with low battery %.2f V -> emergency sleep\n", lastVbatt);
-        emergencySleepTimerOnly();
+        case BOOT_NORMAL:
+            if (wokeFromEmergencySleep)
+            {
+                uint32_t sleptChecks = rtcSleepWakeCount;
+                rtcEmergencySleep    = false;
+                rtcSleepWakeCount    = 0;
+
+                nextWifiConnectReason =
+                    "ИБП проснулся после аварийного сна. Проверок во сне: " +
+                    String(sleptChecks) + ".";
+            }
+            break;
     }
 
     logEvent("BOOT FW " FW_FULL_ID +
@@ -99,8 +115,7 @@ void setup()
 
     // KEY POINT: the ESP controls power to the router whose WiFi it must join.
     // Turn the loads on first, wait for the router to boot, then try WiFi.
-    bool canPowerRouter = gridPresent || (lastVbatt > cfg.battCutoff);
-    if (canPowerRouter)
+    if (canPowerLoadsOnBoot(gridPresent, lastVbatt, cfg.battCutoff))
     {
         setRouter(true);
         setOnt(true);
@@ -108,9 +123,7 @@ void setup()
     else
     {
         setBothLoads(false);
-        // Booted below LVD but above the fallback sleep threshold — treat LVD
-        // as tripped so the emergency-sleep timer starts.
-        if (!gridPresent && lastVbatt <= cfg.battCutoff)
+        if (shouldArmLvdAtBoot(gridPresent, lastVbatt, cfg.battCutoff))
         {
             lvdTripped    = true;
             sleepLowSince = millis();

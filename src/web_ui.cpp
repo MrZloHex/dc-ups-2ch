@@ -109,7 +109,7 @@ static String page()
          "<button class='b4' onclick=\"restartCh('router')\">Restart ROUTER</button>"
          "</div></div>";
 
-    p += "<div class='card'><h3>Выход ONT — GPIO26</h3>"
+    p += "<div class='card'><h3>Выход ONT — GPIO25</h3>"
          "Состояние: <b id='ontcard'>—</b><div class='row'>"
          "<button onclick=\"chmode('ont','on')\">Вкл</button>"
          "<button class='b2' onclick=\"chmode('ont','off')\">Выкл</button>"

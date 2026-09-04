@@ -11,7 +11,8 @@
 #include "esp_task_wdt.h"
 #include "driver/rtc_io.h"
 
-bool buttonIgnoreUntilRelease = false;
+bool    buttonIgnoreUntilRelease = false;
+LedMode ledMode                  = LED_MODE_RUN;
 
 // Button state machine — internal only.
 static bool          s_raw            = HIGH;
@@ -69,6 +70,35 @@ void handleWakeCause(esp_sleep_wakeup_cause_t cause)
 
 void updateLeds()
 {
+    switch (ledMode)
+    {
+        case LED_MODE_BOOT_WIFI:
+        {
+            // Green blinks at ~2 Hz (250 ms half-period); red stays off.
+            // Distinguishes "ESP alive, joining WiFi" from "ESP silent".
+            bool on = ((millis() / 250) & 1) != 0;
+            digitalWrite(PIN_LED_GRID, on ? HIGH : LOW);
+            digitalWrite(PIN_LED_BATT, LOW);
+            return;
+        }
+
+        case LED_MODE_PORTAL:
+        {
+            // Slow alternating green/red (500 ms each side): user can tell
+            // "setup portal is active" from across the room and it's clearly
+            // not the normal RUN indication.
+            bool phase = ((millis() / 500) & 1) != 0;
+            digitalWrite(PIN_LED_GRID,  phase ? HIGH : LOW);
+            digitalWrite(PIN_LED_BATT, !phase ? HIGH : LOW);
+            return;
+        }
+
+        case LED_MODE_RUN:
+        default:
+            break;
+    }
+
+    // RUN mode: steady green iff grid present.
     digitalWrite(PIN_LED_GRID, gridPresent ? HIGH : LOW);
 
     bool red;
