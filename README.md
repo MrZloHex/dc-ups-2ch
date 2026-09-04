@@ -158,6 +158,7 @@ channel.
 - [`docs/DC_UPS_label_v6.tex`](docs/DC_UPS_label_v6.tex) - 90 × 55 mm enclosure
   label; QR code encodes the documentation-site URL above
 - [Printables](https://www.printables.com/model/1832207-dc-ups-2ch-esp32-dc-ups-for-router-ont) - Page on printables
+- [MakerWorld](https://makerworld.com/en/models/3258940-dc-ups-2ch-esp32-dc-ups-for-router-ont#profileId-3694235) - Page on MakerWorld
 
 ## Contributing
 
@@ -174,10 +175,6 @@ Issues and PRs welcome. Please:
 **Firmware & documentation:** GNU General Public License v3.0 or later —
 see [LICENSE](LICENSE). If you build a product on top of this firmware,
 you must make your source available under the same license.
-
-**Enclosure / 3D model:** Creative Commons Attribution-ShareAlike 4.0
-International (CC-BY-SA 4.0) — see the notes in
-[`hardware/enclosure/README.md`](hardware/enclosure/README.md).
 
 Hardware wiring is documented for personal / educational use; recycled
 AC/DC bricks and Chinese DC/DC modules used in the BOM come with their
