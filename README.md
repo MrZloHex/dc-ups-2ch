@@ -142,22 +142,22 @@ channel.
 
 ## Documentation
 
-- **[Documentation site](https://mrzlohex.github.io/dc-ups-2ch/)** — GitHub
+- **[Documentation site](https://mrzlohex.github.io/dc-ups-2ch/)** - GitHub
   Pages landing page linking to every PDF. This URL is also encoded in the QR
-  code printed on the enclosure label — scan the label with any phone to jump
+  code printed on the enclosure label - scan the label with any phone to jump
   straight here.
-- [`hardware/README.md`](hardware/README.md) — BOM, GPIO map, ASCII wiring, calibration
-- [`hardware/enclosure/`](hardware/enclosure/) — 3D-printable case (Onshape
-  source, STEP exports and slicer-ready 3MFs, CC-BY-SA 4.0)
+- [`hardware/README.md`](hardware/README.md) - BOM, GPIO map, ASCII wiring, calibration
+- [`hardware/enclosure/`](hardware/enclosure/) - 3D-printable case
 - [`docs/DC_UPS_documentation_v6.tex`](docs/DC_UPS_documentation_v6.tex) /
   [`docs/DC_UPS_documentation_v6_en.tex`](docs/DC_UPS_documentation_v6_en.tex)
-  — full passport, service manual, warranty template (Russian and English
+  - full passport, service manual, warranty template (Russian and English
   variants; both stamped from the same `build_info.tex`)
 - [`docs/DC_UPS_user_manual_v6.tex`](docs/DC_UPS_user_manual_v6.tex) /
   [`docs/DC_UPS_user_manual_v6_en.tex`](docs/DC_UPS_user_manual_v6_en.tex)
-  — short A5 user manual (Russian and English) with local-panel + docs-site QR codes
-- [`docs/DC_UPS_label_v6.tex`](docs/DC_UPS_label_v6.tex) — 90 × 55 mm enclosure
+  - short A5 user manual (Russian and English) with local-panel + docs-site QR codes
+- [`docs/DC_UPS_label_v6.tex`](docs/DC_UPS_label_v6.tex) - 90 × 55 mm enclosure
   label; QR code encodes the documentation-site URL above
+  - [Printables](https://www.printables.com/model/1832207-dc-ups-2ch-esp32-dc-ups-for-router-ont) - Page on printables
 
 ## Contributing
 

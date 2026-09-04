@@ -135,7 +135,7 @@ distclean: clean
 	rm -f $(TARGETS)
 
 help:
-	@echo "Targets: all doc manual label watch clean distclean version build_info"
+	@echo "Targets: all doc manual label en ru watch clean distclean version build_info help"
 	@echo "Sources: $(SOURCES)"
 	@echo "Outputs: $(TARGETS)"
 	@echo ""

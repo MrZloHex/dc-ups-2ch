@@ -45,13 +45,5 @@ hardware/enclosure/
 |                  | opening-up so the battery bay prints support-free        |
 | Brim             | 5 mm on the case bottom, none on the lid                 |
 
-## License
-
-The 3D model, STEP exports, 3MF slicer packages and renders in this
-directory are released under
-[Creative Commons Attribution-ShareAlike 4.0 International (CC-BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/).
-This is *separate* from the firmware / documentation licence — see the
-top-level [`LICENSE`](../../LICENSE) for those.
-
 
 
